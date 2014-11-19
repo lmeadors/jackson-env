@@ -1,0 +1,17 @@
+{
+	// LOOK! A COMMENT!
+	"globalSettings": {
+		"some.key": "some.global.value"
+	},
+	"environmentSettings": {
+		"PROD": {
+			"some.key": "some.prod.value"
+		},
+		"LOCAL": {
+			"some.key": "some.local.value"
+		}
+	},
+	"requiredSettings": [
+		// none yet
+	]
+}

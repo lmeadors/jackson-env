@@ -1,0 +1,20 @@
+{
+	// LOOK! A COMMENT!
+	"globalSettings": {
+		"a.boolean": true,
+		"some.key": "default.global.value",
+		"an.integer": 234,
+		"this.is.required": true
+	},
+	"environmentSettings": {
+		"PROD": {
+			"env.key": "env.prod.value"
+		},
+		"LOCAL": {
+			"an.integer": 123
+		}
+	},
+	"requiredSettings": [
+		"this.is.required"
+	]
+}
