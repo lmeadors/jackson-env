@@ -69,6 +69,41 @@ So, the rules are:
 
 Simple.
 
+Maven
+---
+
+To add this to your project, add this:
+
+	<dependencies>
+		<dependency>
+			<groupId>com.elmsoftware</groupId>
+			<artifactId>jackson-env</artifactId>
+			<version>1.2</version>
+		</dependency>
+	</dependencies>
+
+It's not in the central repositories, so you also have to add this:
+
+	<repositories>
+		<repository>
+			<id>elm-software-releases</id>
+			<url>https://github.com/lmeadors/maven-repo/raw/master/releases</url>
+		</repository>
+	</repositories>
+
+If you want to use the latest snapshot, there is a snapshot repository, too:
+
+	<repositories>
+		<repository>
+			<id>elm-software-releases</id>
+			<url>https://github.com/lmeadors/maven-repo/raw/master/releases</url>
+		</repository>
+		<repository>
+			<id>elm-software-snapshots</id>
+			<url>https://github.com/lmeadors/maven-repo/raw/master/snapshots</url>
+		</repository>
+	</repositories>
+
 Using jackson-env with guice
 ---
 
