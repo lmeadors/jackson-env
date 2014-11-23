@@ -2,7 +2,6 @@ package com.elmsoftware.env;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static com.elmsoftware.env.Util.closeQuietly;
+import static com.elmsoftware.env.Util.isBlank;
 
 public class EnvironmentSettings {
 
@@ -36,7 +36,7 @@ public class EnvironmentSettings {
 		} catch (final Exception e) {
 			throw new RuntimeException(e.toString(), e);
 		} finally {
-			IOUtils.closeQuietly(inputStream);
+			closeQuietly(inputStream);
 		}
 
 		return settings;
@@ -53,7 +53,11 @@ public class EnvironmentSettings {
 		return this;
 	}
 
-	public EnvironmentSettings withEnvironmentSetting(final String environment, final String key, final String value) {
+	public EnvironmentSettings withEnvironmentSetting(
+			final String environment,
+			final String key,
+			final String value
+	) {
 		if (!environmentSettings.containsKey(environment)) {
 			environmentSettings.put(environment, new HashMap<String, String>());
 		}
