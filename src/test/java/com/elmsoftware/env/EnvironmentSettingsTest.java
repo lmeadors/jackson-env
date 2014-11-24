@@ -275,4 +275,23 @@ public class EnvironmentSettingsTest {
 
 	}
 
+	@Test
+	public void should_warn_about_duplicated_values() {
+		// setup test
+		final String environment = "test";
+		final String value = "value";
+		final String keyName = "key_name";
+		final EnvironmentSettings settings = new EnvironmentSettings()
+				.withGlobalSetting(keyName, value)
+				.withEnvironmentSetting(environment, keyName, value);
+
+		// run test
+		final Map<String, String> map = settings.merge(environment);
+
+		// verify outcome - doesn't assert anything related to the logging,
+		// but it's a sanity check for the key/value handling
+		assertEquals(value, map.get(keyName));
+
+	}
+
 }

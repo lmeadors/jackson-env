@@ -17,6 +17,9 @@ import static com.elmsoftware.env.Util.isBlank;
 public class EnvironmentSettings {
 
 	private static final Logger log = LoggerFactory.getLogger(EnvironmentSettings.class);
+	public static final String DUPLICATE_GLOBAL_VARIABLE = "The value for '{}' is '{}' in both the " +
+			"global and '{}' environments; you can remove the duplicate value in the '{}' " +
+			"environment to simplify your configuration file.";
 
 	private Map<String, String> globalSettings = new HashMap<>();
 	private Map<String, Map<String, String>> environmentSettings = new HashMap<>();
@@ -81,6 +84,17 @@ public class EnvironmentSettings {
 		final Map<String, String> environmentValues = environmentSettings.get(environment);
 		log.debug("Adding environment values to merged results: {}", environmentValues);
 		if (null != environmentValues) {
+			log.debug("Checking for duplicates in environment values");
+			for (final String key : environmentValues.keySet()) {
+				final String globalValue = objectMap.get(key);
+				if (null != globalValue) {
+					if (environmentValues.get(key).equals(globalValue)) {
+						log.warn(
+								DUPLICATE_GLOBAL_VARIABLE,
+								key, globalValue, environment, environment);
+					}
+				}
+			}
 			objectMap.putAll(environmentValues);
 		}
 
