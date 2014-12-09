@@ -21,9 +21,9 @@ public class EnvironmentSettings {
 			"global and '{}' environments; you can remove the duplicate value in the '{}' " +
 			"environment to simplify your configuration file.";
 
-	private Map<String, String> globalSettings = new HashMap<>();
-	private Map<String, Map<String, String>> environmentSettings = new HashMap<>();
-	private List<String> requiredSettings = new ArrayList<>();
+	private Map<String, String> globalSettings = new HashMap<String, String>();
+	private Map<String, Map<String, String>> environmentSettings = new HashMap<String, Map<String, String>>();
+	private List<String> requiredSettings = new ArrayList<String>();
 
 	public static EnvironmentSettings load(final String resourceName) {
 
@@ -76,7 +76,7 @@ public class EnvironmentSettings {
 	public Map<String, String> merge(final String environment) {
 
 		// our merged set of values
-		final Map<String, String> objectMap = new HashMap<>();
+		final Map<String, String> objectMap = new HashMap<String, String>();
 
 		log.debug("Adding global values to merged results: {}", globalSettings);
 		objectMap.putAll(globalSettings);
