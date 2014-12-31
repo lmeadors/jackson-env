@@ -6,6 +6,8 @@ import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 public class EnvironmentSettingsModule implements Module {
 
 	private static final Logger log = LoggerFactory.getLogger(EnvironmentSettingsModule.class);
@@ -19,7 +21,13 @@ public class EnvironmentSettingsModule implements Module {
 		log.debug("Loading environment {} using resource {}", environment, resourceName);
 
 		final EnvironmentSettings settings = EnvironmentSettings.load(resourceName);
-		Names.bindProperties(binder, settings.merge(environment));
+		final Map<String, String> properties = settings.merge(environment);
+		Names.bindProperties(binder, properties);
+		configure(binder, properties);
+
+	}
+
+	protected void configure(final Binder binder, final Map<String, String> properties){
 
 	}
 
