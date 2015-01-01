@@ -113,10 +113,12 @@ You have two options. You can load the `EnvironmentSettingsModule` as it is and 
 
 You can also extend the `EnvironmentSettingsModule` and implement this:
 
-		protected abstract void configure(
+		protected  void configure(
 			final Binder binder, 
 			final Map<String, String> properties
-		);
+		){
+			// add your configuration here...
+		}
 
 What happens in the second case is that the properties in the merged json data are bound, then your configure method is called with the `Binder` instance passed in from Guice as well as the merged properties (in case you need them). 
 
