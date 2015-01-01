@@ -107,7 +107,20 @@ If you want to use the latest snapshot, there is a snapshot repository, too:
 Using jackson-env with guice
 ---
 
-This is pretty simple - a module has been created for you. All you need to do is:
+This is pretty simple - a module has been created for you. 
+
+You have two options. You can load the `EnvironmentSettingsModule` as it is and get the properties bound for use in `@Named` annotations.
+
+You can also extend the `EnvironmentSettingsModule` and implement this:
+
+		protected abstract void configure(
+			final Binder binder, 
+			final Map<String, String> properties
+		);
+
+What happens in the second case is that the properties in the merged json data are bound, then your configure method is called with the `Binder` instance passed in from Guice as well as the merged properties (in case you need them). 
+
+In either case, you need to:
 
 - name your environment file `environment.json` or set an environment variable named `environment.json` with the location of the json file on the classpath.
 - set an environment variable named `environment` to the environment you want to merge down
@@ -117,11 +130,10 @@ Just that simple:
 
 	$ java -Denvironment=PROD ...
 
-
 Using jackson-env with spring
 ---
 
-The spring integration feels hokey to me still - if you have a better way, please for the love of all that is good, fork and send me a patch.
+The spring integration feels hokey to me still - if you have a better way, please for the love of all that is good, fork and send me a patch. Maybe JNDI?
 
 You load up an instance of the `EnvironmentSettingsResolver` class, and it in turn merges one set of properties and tucks them away into the system properties.
 
