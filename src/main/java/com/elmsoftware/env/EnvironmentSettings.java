@@ -34,12 +34,16 @@ public class EnvironmentSettings {
 
 		final InputStream inputStream = EnvironmentSettings.class.getClassLoader().getResourceAsStream(resourceName);
 
-		try {
-			settings = objectMapper.readValue(inputStream, EnvironmentSettings.class);
-		} catch (final Exception e) {
-			throw new RuntimeException(e.toString(), e);
-		} finally {
-			closeQuietly(inputStream);
+		if (null != inputStream) {
+			try {
+				settings = objectMapper.readValue(inputStream, EnvironmentSettings.class);
+			} catch (final Exception e) {
+				throw new RuntimeException(e.toString(), e);
+			} finally {
+				closeQuietly(inputStream);
+			}
+		} else {
+			settings = null;
 		}
 
 		return settings;

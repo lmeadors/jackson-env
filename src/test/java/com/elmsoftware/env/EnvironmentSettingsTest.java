@@ -88,13 +88,28 @@ public class EnvironmentSettingsTest {
 
 	}
 
+	@Test
+	public void should_return_null_if_settings_do_not_exist() {
+
+		// setup test - none required
+		// run test
+		final EnvironmentSettings settings = EnvironmentSettings.load("this_does_not_exist.json");
+
+		// verify outcome
+		assertNull(settings);
+
+	}
+
 	@Test(expected = RuntimeException.class)
 	public void should_explode_if_unable_to_load_settings() {
-		// setup test
+
+		// setup test - none required
 		// run test
-		EnvironmentSettings.load("this_does_not_exist.json");
+		EnvironmentSettings.load("crap_file.json");
+
 		// verify outcome
-		fail("this should have exploded already");
+		fail("this should have already exploded.");
+
 	}
 
 	@Test

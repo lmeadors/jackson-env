@@ -5,7 +5,6 @@ import com.google.inject.Key;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -13,7 +12,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -30,20 +32,53 @@ public class EnvironmentSettingsModuleTest {
 	@Captor
 	private ArgumentCaptor<Key<String>> argumentCaptor;
 
-	@Before
-	public void beforeEnvironmentSettingsModuleTest() {
+	@Test
+	public void should_bind_named_values_with_optional_overrides() {
 
+		// setup test
 		System.setProperty("environment.json", "guice-test.json");
+		System.setProperty("local.environment.json", "local-guice-test.json");
 
 		when(binder.bind(any(Key.class))).thenReturn(builder);
 		when(binder.skipSources(Names.class)).thenReturn(binder);
 
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule();
+
+		// run test
+		module.configure(binder);
+
+		// verify outcome
+		verify(binder).skipSources(Names.class);
+		verify(binder, times(2)).bind(argumentCaptor.capture());
+		verifyNoMoreInteractions(binder);
+
+		final List<Key<String>> allValues = argumentCaptor.getAllValues();
+
+		assertNotNull(findKey(allValues, "some.key"));
+		assertNotNull(findKey(allValues, "some.local.key"));
+
+	}
+
+	private Key<String> findKey(final List<Key<String>> allValues, final String name) {
+		for (final Key<String> key : allValues) {
+			final Named annotation = (Named) key.getAnnotation();
+			if (annotation.value().equals(name)) {
+				return key;
+			}
+		}
+		return null;
 	}
 
 	@Test
-	public void should_bind_named_values() {
+	public void should_bind_named_values_without_optional_overrides() {
 
 		// setup test
+		System.setProperty("environment.json", "guice-test.json");
+		System.setProperty("local.environment.json", "snapped-the-frame.json");
+
+		when(binder.bind(any(Key.class))).thenReturn(builder);
+		when(binder.skipSources(Names.class)).thenReturn(binder);
+
 		final EnvironmentSettingsModule module = new EnvironmentSettingsModule();
 
 		// run test
