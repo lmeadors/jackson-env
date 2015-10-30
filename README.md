@@ -76,7 +76,7 @@ To add this to your project, add this:
 
 	<dependencies>
 		<dependency>
-			<groupId>com.elmsoftware</groupId>
+			<groupId>com.elm-software</groupId>
 			<artifactId>jackson-env</artifactId>
 			<version>1.5</version>
 		</dependency>
