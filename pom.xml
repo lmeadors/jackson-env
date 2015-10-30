@@ -8,6 +8,21 @@
 
 	<name>jackson-env</name>
 	<url>https://github.com/lmeadors/jackson-env</url>
+	<description>A nifty tool to configure multiple environments using json.</description>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<id>lmeadors</id>
+			<email>larry.meadors+spam@gmail.com</email>
+		</developer>
+	</developers>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -128,6 +143,7 @@
 		<connection>scm:git:git@github.com:lmeadors/jackson-env.git</connection>
 		<developerConnection>scm:git:git@github.com:lmeadors/jackson-env.git</developerConnection>
 		<tag>HEAD</tag>
+		<url>https://github.com/lmeadors/jackson-env</url>
 	</scm>
 
 </project>
