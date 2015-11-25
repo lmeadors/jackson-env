@@ -3,7 +3,7 @@
 
 	<groupId>com.elm-software</groupId>
 	<artifactId>jackson-env</artifactId>
-	<version>1.11</version>
+	<version>1.12-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>jackson-env</name>
@@ -142,7 +142,7 @@
 	<scm>
 		<connection>scm:git:git@github.com:lmeadors/jackson-env.git</connection>
 		<developerConnection>scm:git:git@github.com:lmeadors/jackson-env.git</developerConnection>
-		<tag>jackson-env-1.11</tag>
+		<tag>HEAD</tag>
 		<url>https://github.com/lmeadors/jackson-env</url>
 	</scm>
 
