@@ -3,7 +3,7 @@
 
 	<groupId>com.elm-software</groupId>
 	<artifactId>jackson-env</artifactId>
-	<version>1.12</version>
+	<version>1.13-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>jackson-env</name>
