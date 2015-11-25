@@ -7,6 +7,8 @@ import static org.junit.Assert.assertNull;
 
 public class EnvironmentSettingsResolverTest {
 
+	private Util util = new Util();
+
 	@Test
 	public void should_add_environment_values_to_system() {
 
@@ -16,7 +18,7 @@ public class EnvironmentSettingsResolverTest {
 		assertNull(System.getProperty("f523be70-0856-4794-b85c-000de747b109"));
 
 		// run test
-		new EnvironmentSettingsResolver("spring-test.json");
+		new EnvironmentSettingsResolver("spring-test.json", util);
 
 		// verify outcome
 		assertEquals("3ceee183-3bcf-41af-af5b-2e35d65a4c2a", System.getProperty("f523be70-0856-4794-b85c-000de747b109"));
@@ -36,7 +38,7 @@ public class EnvironmentSettingsResolverTest {
 		assertNull(System.getProperty("f523be70-0856-4794-b85c-000de747b109"));
 
 		// run test
-		new EnvironmentSettingsResolver("spring-test.json", "local-spring-test.json");
+		new EnvironmentSettingsResolver("spring-test.json", "local-spring-test.json", util);
 
 		// verify outcome
 		assertEquals("3ceee183-3bcf-41af-af5b-2e35d65a4c2a", System.getProperty("f523be70-0856-4794-b85c-000de747b109"));

@@ -11,15 +11,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.elmsoftware.env.Util.closeQuietly;
-import static com.elmsoftware.env.Util.isBlank;
-
 public class EnvironmentSettings {
 
-	private static final Logger log = LoggerFactory.getLogger(EnvironmentSettings.class);
 	public static final String DUPLICATE_GLOBAL_VARIABLE = "The value for '{}' is '{}' in both the " +
 			"global and '{}' environments; you can remove the duplicate value in the '{}' " +
 			"environment to simplify your configuration file.";
+
+	public static final String ENV_VAR = "com.elmsoftware.env";
+
+	private static final Logger log = LoggerFactory.getLogger(EnvironmentSettings.class);
+	private static final Util util = new Util();
 
 	private Map<String, String> globalSettings = new HashMap<String, String>();
 	private Map<String, Map<String, String>> environmentSettings = new HashMap<String, Map<String, String>>();
@@ -40,7 +41,7 @@ public class EnvironmentSettings {
 			} catch (final Exception e) {
 				throw new RuntimeException(e.toString(), e);
 			} finally {
-				closeQuietly(inputStream);
+				util.closeQuietly(inputStream);
 			}
 		} else {
 			settings = null;
@@ -109,7 +110,7 @@ public class EnvironmentSettings {
 			if (null == value) {
 				// check the VM args for the setting
 				final String property = System.getProperty(key);
-				if (!isBlank(property)) {
+				if (!util.isBlank(property)) {
 					log.info("Found missing config property {} in VM properties as '{}'", key, property);
 					objectMap.put(key, property);
 				} else {

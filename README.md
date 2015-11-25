@@ -121,3 +121,12 @@ You load up an instance of the `EnvironmentSettingsResolver` class, and it in tu
 
 Just make sure that it loads before anything that needs it.
 
+Using a SYSTEM property to control environment
+---
+
+In addition to using a Java environment variable to set the environment, you can now use a system property.
+
+To set your environment to PROD, you can do this:
+
+	export com.elmsoftware.env=PROD
+

@@ -12,11 +12,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -28,6 +27,8 @@ public class EnvironmentSettingsModuleTest {
 
 	@Mock
 	private LinkedBindingBuilder<String> builder;
+
+	private Util util = new Util();
 
 	@Captor
 	private ArgumentCaptor<Key<String>> argumentCaptor;
@@ -42,7 +43,7 @@ public class EnvironmentSettingsModuleTest {
 		when(binder.bind(any(Key.class))).thenReturn(builder);
 		when(binder.skipSources(Names.class)).thenReturn(binder);
 
-		final EnvironmentSettingsModule module = new EnvironmentSettingsModule();
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(util);
 
 		// run test
 		module.configure(binder);
@@ -79,7 +80,7 @@ public class EnvironmentSettingsModuleTest {
 		when(binder.bind(any(Key.class))).thenReturn(builder);
 		when(binder.skipSources(Names.class)).thenReturn(binder);
 
-		final EnvironmentSettingsModule module = new EnvironmentSettingsModule();
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(util);
 
 		// run test
 		module.configure(binder);
@@ -93,6 +94,18 @@ public class EnvironmentSettingsModuleTest {
 		assertTrue(value.hasAttributes());
 		final Named annotation = (Named) value.getAnnotation();
 		assertEquals("some.key", annotation.value());
+	}
+
+	@Test
+	public void should_create_util_instance_if_not_provided() throws Exception {
+		// setup test
+		// run test
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule();
+		// verify outcome
+		final Field utilField = EnvironmentSettingsModule.class.getDeclaredField("util");
+		assertNotNull(utilField);
+		utilField.setAccessible(true);
+		assertNotNull(utilField.get(module));
 	}
 
 }
