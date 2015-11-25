@@ -2,4 +2,4 @@
 #pushd ../maven-repo
 #REPO_HOME=`pwd`
 #popd
-mvn clean release:prepare release:perform
+mvn clean jgitflow:release-start jgitflow:release-finish deploy
