@@ -130,3 +130,13 @@ To set your environment to PROD, you can do this:
 
 	export com.elmsoftware.env=PROD
 
+Deployment Instructions
+---
+
+This is just so I don't forget how to do this. :)
+
+	mvn clean jgitflow:release-start jgitflow:release-finish deploy
+
+Then go to <https://oss.sonatype.org/#stagingRepositories> (and login), then select the repository to publish, then click on the "Close" button.
+
+Once the release is closed, it needs to be released - this can take several minutes.
