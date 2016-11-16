@@ -74,11 +74,21 @@ public class EnvironmentSettings {
 	}
 
 	/**
+	 * Merges and validates the keys and values - allows overrides using -D
+	 *
+	 * @param environment
+	 * @return
+	 */
+	public Map<String, String> merge(final String environment) {
+		return merge(environment, true);
+	}
+
+	/**
 	 * Merges and validates the keys and values.
 	 *
 	 * @return A map of name / value pairs
 	 */
-	public Map<String, String> merge(final String environment) {
+	public Map<String, String> merge(final String environment, final boolean allowOverride) {
 
 		// our merged set of values
 		final Map<String, String> objectMap = new HashMap<String, String>();
@@ -125,16 +135,20 @@ public class EnvironmentSettings {
 			throw new RuntimeException("Missing required settings: " + missingSettings.toString());
 		}
 
-		log.debug("Checking VM options for configuration value replacements");
-		for (final String key : objectMap.keySet()) {
-			final String property = System.getProperties().getProperty(key);
-			if (null != property) {
-				final String oldValue = objectMap.get(key);
-				if (!oldValue.equals(property)) {
-					log.info("Replacing config property {} (old value: '{}') with VM property value '{}'", key, oldValue, property);
-					objectMap.put(key, property);
+		if (allowOverride) {
+			log.debug("Checking VM options for configuration value replacements");
+			for (final String key : objectMap.keySet()) {
+				final String property = System.getProperties().getProperty(key);
+				if (null != property) {
+					final String oldValue = objectMap.get(key);
+					if (!oldValue.equals(property)) {
+						log.info("Replacing config property {} (old value: '{}') with VM property value '{}'", key, oldValue, property);
+						objectMap.put(key, property);
+					}
 				}
 			}
+		} else {
+			log.info("existing jvm args are ignored (-D values)");
 		}
 
 		return objectMap;
