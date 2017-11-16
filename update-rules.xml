@@ -1,0 +1,54 @@
+<ruleset
+		comparisonMethod="maven"
+		xmlns="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0
+		http://mojo.codehaus.org/versions-maven-plugin/xsd/rule-2.0.0.xsd">
+	<rules>
+		<rule groupId="org.slf4j" comparisonMethod="maven">
+			<ignoreVersions>
+				<!-- We'll let 1.8.x percolate a while longer -->
+				<ignoreVersion type="regex">1.8.*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="org.mockito" comparisonMethod="maven">
+			<ignoreVersions>
+				<!-- We'll let 2.x percolate a while longer -->
+				<ignoreVersion type="regex">2.*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="org.jboss.resteasy" comparisonMethod="maven">
+			<ignoreVersions>
+				<!-- We'll let 3.1.x percolate a while longer -->
+				<ignoreVersion type="regex">3.1.*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="com.google.inject" comparisonMethod="maven">
+			<ignoreVersions>
+				<!-- 4.x is still beta -->
+				<ignoreVersion type="regex">4.*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="javax.servlet" comparisonMethod="maven">
+			<ignoreVersions>
+				<!-- 4.x is still beta -->
+				<ignoreVersion type="regex">4.*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="org.springframework" comparisonMethod="maven">
+			<ignoreVersions>
+				<!-- we'll stay on 4.x a while longer... -->
+				<ignoreVersion type="regex">5.*</ignoreVersion>
+				 <!-- later spring versions broke all the tests -->
+				<ignoreVersion type="regex">4.3.*</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+		<rule groupId="org.postgresql" comparisonMethod="maven">
+			<ignoreVersions>
+				<!-- these are just for older jdks -->
+				<ignoreVersion type="regex">.*\..*\..*\.jre6</ignoreVersion>
+				<ignoreVersion type="regex">.*\..*\..*\.jre7</ignoreVersion>
+			</ignoreVersions>
+		</rule>
+	</rules>
+</ruleset>
