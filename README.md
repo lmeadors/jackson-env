@@ -135,6 +135,7 @@ Deployment Instructions
 
 This is just so I don't forget how to do this. :)
 
+	export GPG_TTY=$(tty)
 	mvn clean jgitflow:release-start jgitflow:release-finish deploy
 
 Then go to <https://oss.sonatype.org/#stagingRepositories> (and login), then select the repository to publish, 
