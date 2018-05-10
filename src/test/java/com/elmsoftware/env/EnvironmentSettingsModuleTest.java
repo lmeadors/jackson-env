@@ -28,6 +28,9 @@ public class EnvironmentSettingsModuleTest {
 	@Mock
 	private LinkedBindingBuilder<String> builder;
 
+	@Mock
+	private SettingProvider settingProvider;
+
 	private Util util = new Util();
 
 	@Captor
@@ -43,7 +46,7 @@ public class EnvironmentSettingsModuleTest {
 		when(binder.bind(any(Key.class))).thenReturn(builder);
 		when(binder.skipSources(Names.class)).thenReturn(binder);
 
-		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(util);
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(new NoOpSettingProvider(), util);
 
 		// run test
 		module.configure(binder);
@@ -60,16 +63,6 @@ public class EnvironmentSettingsModuleTest {
 
 	}
 
-	private Key<String> findKey(final List<Key<String>> allValues, final String name) {
-		for (final Key<String> key : allValues) {
-			final Named annotation = (Named) key.getAnnotation();
-			if (annotation.value().equals(name)) {
-				return key;
-			}
-		}
-		return null;
-	}
-
 	@Test
 	public void should_bind_named_values_without_optional_overrides() {
 
@@ -80,7 +73,7 @@ public class EnvironmentSettingsModuleTest {
 		when(binder.bind(any(Key.class))).thenReturn(builder);
 		when(binder.skipSources(Names.class)).thenReturn(binder);
 
-		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(util);
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(new NoOpSettingProvider(), util);
 
 		// run test
 		module.configure(binder);
@@ -106,6 +99,35 @@ public class EnvironmentSettingsModuleTest {
 		assertNotNull(utilField);
 		utilField.setAccessible(true);
 		assertNotNull(utilField.get(module));
+	}
+
+	@Test
+	public void should_use_settings_provider_if_provided() throws Exception {
+		// setup test
+		// run test
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(settingProvider);
+
+		// verify outcome
+		final Field utilField = EnvironmentSettingsModule.class.getDeclaredField("util");
+		assertNotNull(utilField);
+		utilField.setAccessible(true);
+		assertNotNull(utilField.get(module));
+
+		final Field providerField = EnvironmentSettingsModule.class.getDeclaredField("settingProvider");
+		assertNotNull(providerField);
+		providerField.setAccessible(true);
+		assertNotNull(providerField.get(module));
+
+	}
+
+	private Key<String> findKey(final List<Key<String>> allValues, final String name) {
+		for (final Key<String> key : allValues) {
+			final Named annotation = (Named) key.getAnnotation();
+			if (annotation.value().equals(name)) {
+				return key;
+			}
+		}
+		return null;
 	}
 
 }

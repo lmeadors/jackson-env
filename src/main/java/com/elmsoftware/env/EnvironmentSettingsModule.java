@@ -13,12 +13,23 @@ public class EnvironmentSettingsModule implements Module {
 	private static final Logger log = LoggerFactory.getLogger(EnvironmentSettingsModule.class);
 
 	private final Util util;
+	private final SettingProvider settingProvider;
 
 	public EnvironmentSettingsModule() {
-		this(new Util());
+		this(new NoOpSettingProvider(), new Util());
 	}
 
-	public EnvironmentSettingsModule(final Util util) {
+	public EnvironmentSettingsModule(
+			final SettingProvider settingProvider
+	) {
+		this(settingProvider, new Util());
+	}
+
+	public EnvironmentSettingsModule(
+			final SettingProvider settingProvider,
+			final Util util
+	) {
+		this.settingProvider = settingProvider;
 		this.util = util;
 	}
 
@@ -37,7 +48,7 @@ public class EnvironmentSettingsModule implements Module {
 		final String localResourceName = System.getProperty("local.environment.json", "local.environment.json");
 		log.debug("trying to load local environment using {}", localResourceName);
 		final EnvironmentSettings localSettings = EnvironmentSettings.load(localResourceName);
-		util.mergeProperties(environment, properties, localResourceName, localSettings);
+		util.mergeProperties(environment, properties, localResourceName, localSettings, settingProvider);
 
 		Names.bindProperties(binder, properties);
 		configure(binder, properties);
