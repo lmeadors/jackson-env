@@ -76,18 +76,22 @@ public class EnvironmentSettings {
 	/**
 	 * Merges and validates the keys and values - allows overrides using -D
 	 *
-	 * @param environment
-	 * @return
+	 * @param environment - the environment we want values for
+	 * @return A map of name / value pairs
 	 */
 	public Map<String, String> merge(final String environment) {
 		return merge(environment, true, new NoOpSettingProvider());
 	}
 
 	/**
-	 * Merges and validates the keys and values.
-	 *
-	 * @return A map of name / value pairs
-	 */
+	* Merges and validates the keys and values.
+	*
+	* @param environment - the environment
+	* @param allowOverride - will we use -D values over pre-defined values?
+	* @param settingProvider - optional setting provider
+	*
+	* @return A map of name / value pairs
+	*/
 	public Map<String, String> merge(
 			final String environment,
 			final boolean allowOverride,
