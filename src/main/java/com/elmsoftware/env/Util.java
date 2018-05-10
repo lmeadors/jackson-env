@@ -29,7 +29,8 @@ public class Util {
 			final String environment,
 			final Map<String, String> mergeTo,
 			final String localResourceName,
-			final EnvironmentSettings mergeFrom
+			final EnvironmentSettings mergeFrom,
+			final SettingProvider settingProvider
 	) {
 		if (null != mergeFrom) {
 			log.info("adding local properties from {}", localResourceName);

@@ -77,6 +77,7 @@ public class EnvironmentSettingsTest {
 		assertEquals("234", mergedProd.get("an.integer"));
 		assertEquals("234", mergedTest.get("an.integer"));
 		assertEquals("234", mergedDev.get("an.integer"));
+
 		// this one is non-default
 		assertEquals("123", mergedLocal.get("an.integer"));
 
@@ -109,6 +110,34 @@ public class EnvironmentSettingsTest {
 
 		// verify outcome
 		fail("this should have already exploded.");
+
+	}
+
+	@Test
+	public void should_use_settings_provider_to_load_missing_settings() {
+
+		// setup test
+
+		// we need a required setting that isn't in the json file
+		final EnvironmentSettings settings = EnvironmentSettings
+				.load("environment-test.json")
+				.withRequiredSetting("settings-provider-test");
+
+		// here's a simple provider...
+		final SettingProvider provider = new SettingProvider() {
+			@Override
+			public String getProperty(final String environment, final String key) {
+				return environment + ":" + key;
+			}
+		};
+
+		// run test
+
+		final Map<String, String> prodEnv = settings.merge("PROD", true, provider);
+
+		// verify outcome
+		System.out.println(prodEnv);
+		assertEquals("PROD:settings-provider-test", prodEnv.get("settings-provider-test"));
 
 	}
 

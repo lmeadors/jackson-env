@@ -80,7 +80,7 @@ public class EnvironmentSettings {
 	 * @return
 	 */
 	public Map<String, String> merge(final String environment) {
-		return merge(environment, true);
+		return merge(environment, true, new NoOpSettingProvider());
 	}
 
 	/**
@@ -88,46 +88,62 @@ public class EnvironmentSettings {
 	 *
 	 * @return A map of name / value pairs
 	 */
-	public Map<String, String> merge(final String environment, final boolean allowOverride) {
+	public Map<String, String> merge(
+			final String environment,
+			final boolean allowOverride,
+			SettingProvider settingProvider
+	) {
 
 		// our merged set of values
-		final Map<String, String> objectMap = new HashMap<String, String>();
-
 		log.debug("Adding global values to merged results: {}", globalSettings);
-		objectMap.putAll(globalSettings);
+		final Map<String, String> mergedResults = new HashMap<String, String>(globalSettings);
 
 		final Map<String, String> environmentValues = environmentSettings.get(environment);
 		log.debug("Adding environment values to merged results: {}", environmentValues);
 		if (null != environmentValues) {
 			log.debug("Checking for duplicates in environment values");
 			for (final String key : environmentValues.keySet()) {
-				final String globalValue = objectMap.get(key);
+				final String globalValue = mergedResults.get(key);
 				if (null != globalValue) {
 					if (environmentValues.get(key).equals(globalValue)) {
 						log.warn(
 								DUPLICATE_GLOBAL_VARIABLE,
-								key, globalValue, environment, environment);
+								key, globalValue, environment, environment
+						);
 					}
 				}
 			}
-			objectMap.putAll(environmentValues);
+			mergedResults.putAll(environmentValues);
 		}
 
 		log.debug("Verifying that the required properties are present: {}", requiredSettings);
 		final StringBuilder missingSettings = new StringBuilder("");
 		for (final String key : requiredSettings) {
-			final String value = objectMap.get(key);
+			final String value = mergedResults.get(key);
 			if (null == value) {
 				// check the VM args for the setting
-				final String property = System.getProperty(key);
-				if (!util.isBlank(property)) {
-					log.info("Found missing config property {} in VM properties as '{}'", key, property);
-					objectMap.put(key, property);
+				final String systemProperty = System.getProperty(key);
+				if (!util.isBlank(systemProperty)) {
+					log.info("Found missing config property {} in VM properties as '{}'", key, systemProperty);
+					mergedResults.put(key, systemProperty);
 				} else {
-					if (missingSettings.length() > 0) {
-						missingSettings.append(", ");
+					// no system property set - ask the setting provider for it...
+					final String providedProperty = settingProvider.getProperty(environment, key);
+					if (!util.isBlank(providedProperty)) {
+						log.info(
+								"Received missing config property {} from {} as '{}'",
+								key,
+								settingProvider,
+								systemProperty
+						);
+						mergedResults.put(key, providedProperty);
+					} else {
+						// ok, it's not here, really.
+						if (missingSettings.length() > 0) {
+							missingSettings.append(", ");
+						}
+						missingSettings.append(key);
 					}
-					missingSettings.append(key);
 				}
 			}
 		}
@@ -137,13 +153,18 @@ public class EnvironmentSettings {
 
 		if (allowOverride) {
 			log.debug("Checking VM options for configuration value replacements");
-			for (final String key : objectMap.keySet()) {
+			for (final String key : mergedResults.keySet()) {
 				final String property = System.getProperties().getProperty(key);
 				if (null != property) {
-					final String oldValue = objectMap.get(key);
+					final String oldValue = mergedResults.get(key);
 					if (!oldValue.equals(property)) {
-						log.info("Replacing config property {} (old value: '{}') with VM property value '{}'", key, oldValue, property);
-						objectMap.put(key, property);
+						log.info(
+								"Replacing config property {} (old value: '{}') with VM property value '{}'",
+								key,
+								oldValue,
+								property
+						);
+						mergedResults.put(key, property);
 					}
 				}
 			}
@@ -151,7 +172,7 @@ public class EnvironmentSettings {
 			log.info("existing jvm args are ignored (-D values)");
 		}
 
-		return objectMap;
+		return mergedResults;
 
 	}
 
