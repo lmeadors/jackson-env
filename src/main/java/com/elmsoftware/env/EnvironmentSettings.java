@@ -138,7 +138,7 @@ public class EnvironmentSettings {
 								"Received missing config property {} from {} as '{}'",
 								key,
 								settingProvider,
-								systemProperty
+								providedProperty
 						);
 						mergedResults.put(key, providedProperty);
 					} else {
