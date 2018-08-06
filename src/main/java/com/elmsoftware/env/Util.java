@@ -47,7 +47,7 @@ public class Util {
 
 		final String environmentName;
 
-		final String systemEnvironmentValue = System.getenv(systemVariableName);
+		final String systemEnvironmentValue = System.getProperty(systemVariableName);
 		log.trace("system variable {} is {}", systemVariableName, systemEnvironmentValue);
 
 		if (isBlank(systemEnvironmentValue)) {

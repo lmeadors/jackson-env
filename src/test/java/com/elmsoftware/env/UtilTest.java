@@ -66,12 +66,16 @@ public class UtilTest {
 
 	@Test
 	public void should_get_system_property() {
+
 		// setup test
-		final String expected = System.getenv("JAVA_HOME");
+		final String expected = System.getProperty("java.home");
+
 		// run test
-		final String actual = util.determineEnvironment("JAVA_HOME");
+		final String actual = util.determineEnvironment("java.home");
+
 		// verify outcome
 		assertEquals(expected, actual);
+
 	}
 
 }
