@@ -37,7 +37,12 @@ public class Util {
 			final Map<String, String> localProperties = mergeFrom.merge(environment);
 			for (final String localKey : localProperties.keySet()) {
 				final String value = localProperties.get(localKey);
-				log.debug("replacing shared property '{}' with value of '{}' (was '{}')", localKey, value, mergeTo.get(localKey));
+				log.debug(
+						"replacing shared property '{}' with value of '{}' (was '{}')",
+						localKey,
+						value,
+						mergeTo.get(localKey)
+				);
 				mergeTo.put(localKey, value);
 			}
 		}
@@ -47,13 +52,14 @@ public class Util {
 
 		final String environmentName;
 
-		final String systemEnvironmentValue = System.getProperty(systemVariableName);
-		log.trace("system variable {} is {}", systemVariableName, systemEnvironmentValue);
+		// this is the alternate name to use
+		final String systemEnvironmentVariableName = System.getProperty(systemVariableName);
+		log.trace("alternate variable name is {} (from {})", systemEnvironmentVariableName, systemVariableName);
 
-		if (isBlank(systemEnvironmentValue)) {
+		if (isBlank(systemEnvironmentVariableName)) {
 			environmentName = System.getProperty("environment", "LOCAL");
 		} else {
-			environmentName = systemEnvironmentValue;
+			environmentName = System.getProperty(systemEnvironmentVariableName, "LOCAL");
 		}
 		log.trace("environment name is {}", environmentName);
 
