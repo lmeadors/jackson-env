@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -68,13 +69,18 @@ public class UtilTest {
 	public void should_get_system_property() {
 
 		// setup test
-		final String expected = System.getProperty("java.home");
+		final String targetName = UUID.randomUUID().toString();
+		final String targetValue = UUID.randomUUID().toString();
+
+		System.setProperty(EnvironmentSettings.ENV_VAR, targetName);
+		System.setProperty(targetName, targetValue);
 
 		// run test
-		final String actual = util.determineEnvironment("java.home");
+		final String actual = util.determineEnvironment(EnvironmentSettings.ENV_VAR);
 
 		// verify outcome
-		assertEquals(expected, actual);
+		assertEquals(targetValue, actual);
+		System.clearProperty(EnvironmentSettings.ENV_VAR);
 
 	}
 
