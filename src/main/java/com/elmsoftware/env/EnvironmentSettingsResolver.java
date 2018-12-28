@@ -5,6 +5,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+/**
+ * @deprecated Use {@link EnvironmentSettingsConfig} instead.
+ */
+@Deprecated
 public class EnvironmentSettingsResolver {
 
 	private static final Logger log = LoggerFactory.getLogger(EnvironmentSettingsResolver.class);

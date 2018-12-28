@@ -1,0 +1,85 @@
+package com.elmsoftware.env;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertySource;
+
+import java.util.Optional;
+import java.util.Properties;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+public class EnvironmentSettingsConfigTest {
+
+	@Mock
+	private SettingProvider provider;
+	@Mock
+	private Util util;
+	@Mock
+	private ConfigurableEnvironment configurableEnvironment;
+
+	private EnvironmentSettingsConfig config;
+	private MutablePropertySources propertySources;
+
+	@Before
+	public void beforeEnvironmentSettingsConfigTest() {
+		initMocks(this);
+		propertySources = new MutablePropertySources();
+		when(configurableEnvironment.getPropertySources()).thenReturn(propertySources);
+		config = new EnvironmentSettingsConfig(configurableEnvironment);
+	}
+
+	@Test
+	public void should_use_provided_util_and_provider() {
+
+		// setup
+		final Optional<Util> optionalUtil = Optional.of(util);
+		final Optional<SettingProvider> optionalProvider = Optional.of(provider);
+		System.setProperty("environment.json", "environment-test.json");
+
+		when(util.determineEnvironment(EnvironmentSettings.ENV_VAR)).thenReturn("PROD");
+
+		// run test
+		final EnvironmentSettings settings = config.environmentSettings(optionalUtil, optionalProvider);
+
+		// verify mocks / capture values
+		verify(util).determineEnvironment(EnvironmentSettings.ENV_VAR);
+		verify(configurableEnvironment).getPropertySources();
+		verifyNoMoreInteractions(util, provider, configurableEnvironment);
+
+		// assert results
+		final PropertySource<Properties> propertySource = (PropertySource<Properties>) propertySources.get("environment-test.json/PROD");
+		final Properties source = propertySource.getSource();
+		assertEquals(5, source.size());
+	}
+
+	@Test
+	public void should_create_util_and_provider_if_null() {
+
+		// setup
+		System.setProperty("environment.json", "environment-test.json");
+
+		when(util.determineEnvironment(EnvironmentSettings.ENV_VAR)).thenReturn("PROD");
+
+		// run test
+		final EnvironmentSettings settings = config.environmentSettings(
+				Optional.empty(), Optional.empty()
+		);
+
+		// verify mocks / capture values
+		verify(configurableEnvironment).getPropertySources();
+		verifyNoMoreInteractions(util, provider, configurableEnvironment);
+
+		// assert results
+		final PropertySource<Properties> propertySource = (PropertySource<Properties>) propertySources.get("environment-test.json/LOCAL");
+		final Properties source = propertySource.getSource();
+		assertEquals(4, source.size());
+
+	}
+
+}

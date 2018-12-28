@@ -34,7 +34,7 @@ public class EnvironmentSettingsModule implements Module {
 	}
 
 	@Override
-	public void configure(Binder binder) {
+	public void configure(final Binder binder) {
 
 		// Load up all named properties
 		final String environment = util.determineEnvironment(EnvironmentSettings.ENV_VAR);

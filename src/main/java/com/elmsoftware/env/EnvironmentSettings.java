@@ -13,9 +13,9 @@ import java.util.Map;
 
 public class EnvironmentSettings {
 
-	public static final String DUPLICATE_GLOBAL_VARIABLE = "The value for '{}' is '{}' in both the " +
-			"global and '{}' environments; you can remove the duplicate value in the '{}' " +
-			"environment to simplify your configuration file.";
+	public static final String DUPLICATE_GLOBAL_VARIABLE = "The value for '{}' is '{}' in both the "
+			+ "global and '{}' environments; you can remove the duplicate value in the '{}' "
+			+ "environment to simplify your configuration file.";
 
 	public static final String ENV_VAR = "com.elmsoftware.env";
 
@@ -95,7 +95,7 @@ public class EnvironmentSettings {
 	public Map<String, String> merge(
 			final String environment,
 			final boolean allowOverride,
-			SettingProvider settingProvider
+			final SettingProvider settingProvider
 	) {
 
 		// our merged set of values

@@ -1,10 +1,28 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-OPEN=`which xdg-open`
-if [[ -z $OPEN ]]; then
-    OPEN=`which open`
+java -version
+
+if [ -f "`which gnome-open`" ]
+then
+	OPEN="gnome-open"
+else
+	OPEN="open"
 fi
 
-mvn clean cobertura:cobertura surefire-report:report-only
-$OPEN target/site/surefire-report.html
-$OPEN target/site/cobertura/index.html
+# use UTC timezone for JVM
+BUILD_OPTS="$BUILD_OPTS -Duser.timezone=GMT"
+
+MVN_CMD="mvn clean jacoco:prepare-agent test"
+
+MVN_CMD="$MVN_CMD site jxr:jxr"
+
+if [ -z "$1" ]; then
+	MVN_CMD="$MVN_CMD $BUILD_OPTS"
+else
+	MVN_CMD="$MVN_CMD -Dtest=$1 $BUILD_OPTS"
+fi
+
+echo $MVN_CMD
+$MVN_CMD
+
+$OPEN target/site/index.html > /dev/null 2>&1
