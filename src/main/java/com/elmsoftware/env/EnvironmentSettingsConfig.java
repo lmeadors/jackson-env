@@ -25,7 +25,7 @@ public class EnvironmentSettingsConfig {
 	}
 
 	@Autowired
-	@Bean
+	@Bean("com.elmsoftware.env.EnvironmentSettings")
 	@Lazy(false)
 	public EnvironmentSettings environmentSettings(
 			final Optional<Util> optionalUtil,
