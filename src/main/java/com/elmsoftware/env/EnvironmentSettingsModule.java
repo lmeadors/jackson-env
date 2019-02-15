@@ -43,12 +43,7 @@ public class EnvironmentSettingsModule implements Module {
 
 		log.debug("Loading environment {} using resource {}", environment, resourceName);
 		final EnvironmentSettings settings = EnvironmentSettings.load(resourceName);
-		final Map<String, String> properties = settings.merge(environment);
-
-		final String localResourceName = System.getProperty("local.environment.json", "local.environment.json");
-		log.debug("trying to load local environment using {}", localResourceName);
-		final EnvironmentSettings localSettings = EnvironmentSettings.load(localResourceName);
-		util.mergeProperties(environment, properties, localResourceName, localSettings, settingProvider);
+		final Map<String, String> properties = settings.merge(environment, true, settingProvider);
 
 		Names.bindProperties(binder, properties);
 		configure(binder, properties);

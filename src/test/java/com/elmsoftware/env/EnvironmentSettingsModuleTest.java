@@ -36,7 +36,7 @@ public class EnvironmentSettingsModuleTest {
 	@Captor
 	private ArgumentCaptor<Key<String>> argumentCaptor;
 
-	@Test
+/*	@Test
 	public void should_bind_named_values_with_optional_overrides() {
 
 		// setup test
@@ -62,7 +62,7 @@ public class EnvironmentSettingsModuleTest {
 		assertNotNull(findKey(allValues, "some.local.key"));
 
 	}
-
+*/
 	@Test
 	public void should_bind_named_values_without_optional_overrides() {
 
