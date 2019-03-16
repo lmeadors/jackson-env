@@ -1,5 +1,6 @@
 package com.elmsoftware.env;
 
+import com.elmsoftware.env.settingproviderimpl.NoOpSettingProvider;
 import com.google.inject.Binder;
 import com.google.inject.Key;
 import com.google.inject.binder.LinkedBindingBuilder;

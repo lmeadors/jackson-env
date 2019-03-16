@@ -1,8 +1,9 @@
-package com.elmsoftware.env;
+package com.elmsoftware.env.settingproviderimpl;
 
+import com.elmsoftware.env.SettingProvider;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
 
 public class NoOpSettingProviderTest {
 

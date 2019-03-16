@@ -1,4 +1,6 @@
-package com.elmsoftware.env;
+package com.elmsoftware.env.settingproviderimpl;
+
+import com.elmsoftware.env.SettingProvider;
 
 public class NoOpSettingProvider implements SettingProvider {
 
