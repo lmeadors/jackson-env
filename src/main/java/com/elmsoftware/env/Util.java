@@ -11,6 +11,9 @@ public class Util {
 
 	private static final Logger log = LoggerFactory.getLogger(Util.class);
 
+	/// minor hack for testing :(
+	private Map<String, String> osEnv = System.getenv();
+
 	public boolean isBlank(final String string) {
 		return null == string || string.trim().isEmpty();
 	}
@@ -25,45 +28,44 @@ public class Util {
 		}
 	}
 
-	public void mergeProperties(
-			final String environment,
-			final Map<String, String> mergeTo,
-			final String localResourceName,
-			final EnvironmentSettings mergeFrom,
-			final SettingProvider settingProvider
-	) {
-		if (null != mergeFrom) {
-			log.info("adding local properties from {}", localResourceName);
-			final Map<String, String> localProperties = mergeFrom.merge(environment);
-			for (final String localKey : localProperties.keySet()) {
-				final String value = localProperties.get(localKey);
-				log.debug(
-						"replacing shared property '{}' with value of '{}' (was '{}')",
-						localKey,
-						value,
-						mergeTo.get(localKey)
-				);
-				mergeTo.put(localKey, value);
-			}
-		}
-	}
-
+	/**
+	 * This can go a few ways:
+	 * <p>
+	 * The environment name can come from a JVM property named "environment" or custom JVM property set at
+	 * "com.elmsoftware.env" can specify an alternate JVM property name to use.
+	 * <p>
+	 * The environment name can come from the OS environment variable named "environment".
+	 * <p>
+	 * As soon as a non-null value is found, we stop looking - the order is JVM arg, then OS environment. If no value is
+	 * found in either location, the string "LOCAL" is returned.
+	 *
+	 * @param systemVariableName - the name of the JVM property that specifies the environment name
+	 * @return - the environment name (i.e., "development", "dev", "prod", etc...)
+	 */
 	public String determineEnvironment(final String systemVariableName) {
-
-		final String environmentName;
 
 		// this is the alternate name to use
 		final String systemEnvironmentVariableName = System.getProperty(systemVariableName);
 		log.trace("alternate variable name is {} (from {})", systemEnvironmentVariableName, systemVariableName);
 
+		final String environmentName;
 		if (isBlank(systemEnvironmentVariableName)) {
-			environmentName = System.getProperty("environment", "LOCAL");
+			environmentName = System.getProperty("environment");
 		} else {
-			environmentName = System.getProperty(systemEnvironmentVariableName, "LOCAL");
+			environmentName = System.getProperty(systemEnvironmentVariableName);
 		}
+
+		final String finalName;
+		if (isBlank(environmentName)) {
+			finalName = osEnv.getOrDefault("environment", "LOCAL");
+		} else {
+			finalName = environmentName;
+		}
+
 		log.trace("environment name is {}", environmentName);
 
-		return environmentName;
+		return finalName;
 
 	}
+
 }

@@ -133,7 +133,7 @@ public class EnvironmentSettingsTest {
 
 		// run test
 
-		final Map<String, String> prodEnv = settings.merge("PROD", true, provider);
+		final Map<String, String> prodEnv = settings.merge("PROD", provider);
 
 		// verify outcome
 		System.out.println(prodEnv);

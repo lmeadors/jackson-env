@@ -1,5 +1,6 @@
 package com.elmsoftware.env;
 
+import com.elmsoftware.env.settingproviderimpl.JvmArgSettingProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +38,8 @@ public class EnvironmentSettingsConfig {
 			return new Util();
 		});
 		final SettingProvider settingProvider = optionalSettingProvider.orElseGet(() -> {
-			log.info("no setting provided supplied - using default no-op provider");
-			return new NoOpSettingProvider();
+			log.info("no setting provided supplied - using default jvm arg provider");
+			return new JvmArgSettingProvider();
 		});
 
 		// figure out the environment name
@@ -55,7 +56,7 @@ public class EnvironmentSettingsConfig {
 
 		// merge the global and env-specific properties
 		final Properties properties = new Properties();
-		properties.putAll(settings.merge(environment, true, settingProvider));
+		properties.putAll(settings.merge(environment, settingProvider));
 		log.trace("merged settings: {}", properties);
 
 		// add the property source to spring's environment

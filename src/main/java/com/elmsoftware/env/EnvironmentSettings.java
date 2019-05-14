@@ -1,5 +1,6 @@
 package com.elmsoftware.env;
 
+import com.elmsoftware.env.settingproviderimpl.JvmArgSettingProvider;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -80,21 +81,18 @@ public class EnvironmentSettings {
 	 * @return A map of name / value pairs
 	 */
 	public Map<String, String> merge(final String environment) {
-		return merge(environment, true, new NoOpSettingProvider());
+		return merge(environment, new JvmArgSettingProvider());
 	}
 
 	/**
-	* Merges and validates the keys and values.
-	*
-	* @param environment - the environment
-	* @param allowOverride - will we use -D values over pre-defined values?
-	* @param settingProvider - optional setting provider
-	*
-	* @return A map of name / value pairs
-	*/
+	 * Merges and validates the keys and values.
+	 *
+	 * @param environment     - the environment
+	 * @param settingProvider - optional setting provider
+	 * @return A map of name / value pairs
+	 */
 	public Map<String, String> merge(
 			final String environment,
-			final boolean allowOverride,
 			final SettingProvider settingProvider
 	) {
 
@@ -121,59 +119,43 @@ public class EnvironmentSettings {
 		}
 
 		log.debug("Verifying that the required properties are present: {}", requiredSettings);
-		final StringBuilder missingSettings = new StringBuilder("");
+		final StringBuilder missingSettings = new StringBuilder();
 		for (final String key : requiredSettings) {
-			final String value = mergedResults.get(key);
-			if (null == value) {
-				// check the VM args for the setting
-				final String systemProperty = System.getProperty(key);
-				if (!util.isBlank(systemProperty)) {
-					log.info("Found missing config property {} in VM properties as '{}'", key, systemProperty);
-					mergedResults.put(key, systemProperty);
+			if (!mergedResults.containsKey(key)) {
+				// check the setting provider for the setting
+				final String providedProperty = settingProvider.getProperty(environment, key);
+				if (!util.isBlank(providedProperty)) {
+					log.debug("Config property {} received from {} as '{}'", key, settingProvider, providedProperty);
+					mergedResults.put(key, providedProperty);
 				} else {
-					// no system property set - ask the setting provider for it...
-					final String providedProperty = settingProvider.getProperty(environment, key);
-					if (!util.isBlank(providedProperty)) {
-						log.info(
-								"Received missing config property {} from {} as '{}'",
-								key,
-								settingProvider,
-								providedProperty
-						);
-						mergedResults.put(key, providedProperty);
-					} else {
-						// ok, it's not here, really.
-						if (missingSettings.length() > 0) {
-							missingSettings.append(", ");
-						}
-						missingSettings.append(key);
+					// ok, it's not here
+					if (missingSettings.length() > 0) {
+						missingSettings.append(", ");
 					}
+					missingSettings.append(key);
 				}
 			}
 		}
+
 		if (missingSettings.length() > 0) {
 			throw new RuntimeException("Missing required settings: " + missingSettings.toString());
 		}
 
-		if (allowOverride) {
-			log.debug("Checking VM options for configuration value replacements");
-			for (final String key : mergedResults.keySet()) {
-				final String property = System.getProperties().getProperty(key);
-				if (null != property) {
-					final String oldValue = mergedResults.get(key);
-					if (!oldValue.equals(property)) {
-						log.info(
-								"Replacing config property {} (old value: '{}') with VM property value '{}'",
-								key,
-								oldValue,
-								property
-						);
-						mergedResults.put(key, property);
-					}
+		log.debug("Checking VM options for configuration value replacements");
+		for (final String key : mergedResults.keySet()) {
+			final String property = System.getProperties().getProperty(key);
+			if (null != property) {
+				final String oldValue = mergedResults.get(key);
+				if (!oldValue.equals(property)) {
+					log.info(
+							"Replacing config property {} (old value: '{}') with VM property value '{}'",
+							key,
+							oldValue,
+							property
+					);
+					mergedResults.put(key, property);
 				}
 			}
-		} else {
-			log.info("existing jvm args are ignored (-D values)");
 		}
 
 		return mergedResults;

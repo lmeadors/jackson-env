@@ -1,5 +1,6 @@
 package com.elmsoftware.env;
 
+import com.elmsoftware.env.settingproviderimpl.NoOpSettingProvider;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
@@ -43,7 +44,7 @@ public class EnvironmentSettingsModule implements Module {
 
 		log.debug("Loading environment {} using resource {}", environment, resourceName);
 		final EnvironmentSettings settings = EnvironmentSettings.load(resourceName);
-		final Map<String, String> properties = settings.merge(environment, true, settingProvider);
+		final Map<String, String> properties = settings.merge(environment, settingProvider);
 
 		Names.bindProperties(binder, properties);
 		configure(binder, properties);
