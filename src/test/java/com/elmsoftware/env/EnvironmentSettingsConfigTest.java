@@ -3,6 +3,7 @@ package com.elmsoftware.env;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.stubbing.Answer;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
@@ -20,6 +21,8 @@ public class EnvironmentSettingsConfigTest {
 	private SettingProvider provider;
 	@Mock
 	private Util util;
+	@Mock
+	private SettingPostProcessor settingPostProcessor;
 	@Mock
 	private ConfigurableEnvironment configurableEnvironment;
 
@@ -40,22 +43,31 @@ public class EnvironmentSettingsConfigTest {
 		// setup
 		final Optional<Util> optionalUtil = Optional.of(util);
 		final Optional<SettingProvider> optionalProvider = Optional.of(provider);
+		final Optional<SettingPostProcessor> optionalSettingPostProcessor = Optional.of(settingPostProcessor);
 		System.setProperty("environment.json", "environment-test.json");
 
 		when(util.determineEnvironment(EnvironmentSettings.ENV_VAR)).thenReturn("PROD");
+		when(settingPostProcessor.process(any()))
+			.thenAnswer((Answer<Properties>) invocation -> invocation.getArgumentAt(0, Properties.class));
 
 		// run test
-		final EnvironmentSettings settings = config.environmentSettings(optionalUtil, optionalProvider);
+		final EnvironmentSettings settings = config.environmentSettings(
+			optionalUtil,
+			optionalProvider,
+			optionalSettingPostProcessor
+		);
 
 		// verify mocks / capture values
 		verify(util).determineEnvironment(EnvironmentSettings.ENV_VAR);
 		verify(configurableEnvironment).getPropertySources();
+		verify(settingPostProcessor).process(any());
 		verifyNoMoreInteractions(util, provider, configurableEnvironment);
 
 		// assert results
 		final PropertySource<Properties> propertySource = (PropertySource<Properties>) propertySources.get("environment-test.json/PROD");
 		final Properties source = propertySource.getSource();
 		assertEquals(5, source.size());
+
 	}
 
 	@Test
@@ -68,7 +80,7 @@ public class EnvironmentSettingsConfigTest {
 
 		// run test
 		final EnvironmentSettings settings = config.environmentSettings(
-				Optional.empty(), Optional.empty()
+				Optional.empty(), Optional.empty(), Optional.empty()
 		);
 
 		// verify mocks / capture values

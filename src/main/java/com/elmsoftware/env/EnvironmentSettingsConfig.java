@@ -12,6 +12,7 @@ import org.springframework.core.env.PropertiesPropertySource;
 
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 @Configuration
 public class EnvironmentSettingsConfig {
@@ -30,7 +31,8 @@ public class EnvironmentSettingsConfig {
 	@Lazy(false)
 	public EnvironmentSettings environmentSettings(
 			final Optional<Util> optionalUtil,
-			final Optional<SettingProvider> optionalSettingProvider
+			final Optional<SettingProvider> optionalSettingProvider,
+			final Optional<SettingPostProcessor> optionalSettingPostProcessor
 	) {
 
 		final Util util = optionalUtil.orElseGet(() -> {
@@ -40,6 +42,14 @@ public class EnvironmentSettingsConfig {
 		final SettingProvider settingProvider = optionalSettingProvider.orElseGet(() -> {
 			log.info("no setting provided supplied - using default jvm arg provider");
 			return new JvmArgSettingProvider();
+		});
+		final SettingPostProcessor postProcessor = optionalSettingPostProcessor.orElseGet(new Supplier<SettingPostProcessor>() {
+			@Override
+			public SettingPostProcessor get() {
+				return new SettingPostProcessor() {
+					// default behavior is adequate for most cases
+				};
+			}
 		});
 
 		// figure out the environment name
@@ -59,11 +69,13 @@ public class EnvironmentSettingsConfig {
 		properties.putAll(settings.merge(environment, settingProvider));
 		log.trace("merged settings: {}", properties);
 
+		final Properties processed = postProcessor.process(properties);
+
 		// add the property source to spring's environment
 		configurableEnvironment.getPropertySources().addLast(
 				new PropertiesPropertySource(
 						resourceName + "/" + environment,
-						properties
+						processed
 				)
 		);
 
