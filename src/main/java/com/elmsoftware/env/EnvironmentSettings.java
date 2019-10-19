@@ -15,17 +15,19 @@ import java.util.Map;
 public class EnvironmentSettings {
 
 	public static final String DUPLICATE_GLOBAL_VARIABLE = "The value for '{}' is '{}' in both the "
-			+ "global and '{}' environments; you can remove the duplicate value in the '{}' "
-			+ "environment to simplify your configuration file.";
+		+ "global and '{}' environments; you can remove the duplicate value in the '{}' "
+		+ "environment to simplify your configuration file.";
 
 	public static final String ENV_VAR = "com.elmsoftware.env";
 
 	private static final Logger log = LoggerFactory.getLogger(EnvironmentSettings.class);
 	private static final Util util = new Util();
 
-	private Map<String, String> globalSettings = new HashMap<String, String>();
-	private Map<String, Map<String, String>> environmentSettings = new HashMap<String, Map<String, String>>();
-	private List<String> requiredSettings = new ArrayList<String>();
+	private Map<String, String> globalSettings = new HashMap<>();
+	private Map<String, Map<String, String>> environmentSettings = new HashMap<>();
+	private List<String> requiredSettings = new ArrayList<>();
+	// these should not be logged ever
+	private List<String> sensitiveSettings = new ArrayList<>();
 
 	public static EnvironmentSettings load(final String resourceName) {
 
@@ -62,13 +64,18 @@ public class EnvironmentSettings {
 		return this;
 	}
 
+	public EnvironmentSettings withSensitiveSetting(final String key) {
+		sensitiveSettings.add(key);
+		return this;
+	}
+
 	public EnvironmentSettings withEnvironmentSetting(
-			final String environment,
-			final String key,
-			final String value
+		final String environment,
+		final String key,
+		final String value
 	) {
 		if (!environmentSettings.containsKey(environment)) {
-			environmentSettings.put(environment, new HashMap<String, String>());
+			environmentSettings.put(environment, new HashMap<>());
 		}
 		environmentSettings.get(environment).put(key, value);
 		return this;
@@ -92,25 +99,25 @@ public class EnvironmentSettings {
 	 * @return A map of name / value pairs
 	 */
 	public Map<String, String> merge(
-			final String environment,
-			final SettingProvider settingProvider
+		final String environment,
+		final SettingProvider settingProvider
 	) {
 
 		// our merged set of values
-		log.debug("Adding global values to merged results: {}", globalSettings);
-		final Map<String, String> mergedResults = new HashMap<String, String>(globalSettings);
+		log.debug("Adding global values to merged results: {}", globalSettings.keySet());
+		final Map<String, String> mergedResults = new HashMap<>(globalSettings);
 
 		final Map<String, String> environmentValues = environmentSettings.get(environment);
-		log.debug("Adding environment values to merged results: {}", environmentValues);
 		if (null != environmentValues) {
+			log.debug("Adding environment values to merged results: {}", environmentValues.keySet());
 			log.debug("Checking for duplicates in environment values");
 			for (final String key : environmentValues.keySet()) {
 				final String globalValue = mergedResults.get(key);
 				if (null != globalValue) {
 					if (environmentValues.get(key).equals(globalValue)) {
 						log.warn(
-								DUPLICATE_GLOBAL_VARIABLE,
-								key, globalValue, environment, environment
+							DUPLICATE_GLOBAL_VARIABLE,
+							key, protectedValue(key, globalValue), environment, environment
 						);
 					}
 				}
@@ -125,7 +132,12 @@ public class EnvironmentSettings {
 				// check the setting provider for the setting
 				final String providedProperty = settingProvider.getProperty(environment, key);
 				if (!util.isBlank(providedProperty)) {
-					log.debug("Config property {} received from {} as '{}'", key, settingProvider, providedProperty);
+					log.debug(
+						"Config property {} received from {} as '{}'",
+						key,
+						settingProvider,
+						protectedValue(key, providedProperty)
+					);
 					mergedResults.put(key, providedProperty);
 				} else {
 					// ok, it's not here
@@ -148,10 +160,10 @@ public class EnvironmentSettings {
 				final String oldValue = mergedResults.get(key);
 				if (!oldValue.equals(property)) {
 					log.info(
-							"Replacing config property {} (old value: '{}') with VM property value '{}'",
-							key,
-							oldValue,
-							property
+						"Replacing config property {} (old value: '{}') with VM property value '{}'",
+						key,
+						protectedValue(key, oldValue),
+						protectedValue(key, property)
 					);
 					mergedResults.put(key, property);
 				}
@@ -160,6 +172,17 @@ public class EnvironmentSettings {
 
 		return mergedResults;
 
+	}
+
+	private String protectedValue(final String key, final String value) {
+		final String result;
+		if (sensitiveSettings.contains(key)) {
+			//noinspection ReplaceAllDot
+			result = value.replaceAll(".", "*");
+		} else {
+			result = value;
+		}
+		return result;
 	}
 
 	public Map<String, String> getGlobalSettings() {

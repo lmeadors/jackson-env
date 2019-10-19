@@ -327,6 +327,7 @@ public class EnvironmentSettingsTest {
 		final String keyName = "key_name";
 		final EnvironmentSettings settings = new EnvironmentSettings()
 				.withGlobalSetting(keyName, value)
+				.withSensitiveSetting(keyName)
 				.withEnvironmentSetting(environment, keyName, value);
 
 		// run test
