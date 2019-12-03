@@ -161,7 +161,11 @@
 			<plugin>
 				<groupId>com.amashchenko.maven.plugin</groupId>
 				<artifactId>gitflow-maven-plugin</artifactId>
-				<version>1.9.0</version>
+				<version>1.11.0</version>
+				<configuration>
+					<postReleaseGoals>deploy</postReleaseGoals>
+					<pushRemote>false</pushRemote>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
