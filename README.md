@@ -87,20 +87,20 @@ It's in the central repositories, so that's it.
 Using jackson-env with guice
 ---
 
-This is pretty simple - a module has been created for you. 
+This is pretty simple - a module has been created for you.
 
 You have two options. You can load the `EnvironmentSettingsModule` as it is and get the properties bound for use in `@Named` annotations.
 
 You can also extend the `EnvironmentSettingsModule` and implement this:
 
 		protected  void configure(
-			final Binder binder, 
+			final Binder binder,
 			final Map<String, String> properties
 		){
 			// add your configuration here...
 		}
 
-What happens in the second case is that the properties in the merged json data are bound, then your configure method is called with the `Binder` instance passed in from Guice as well as the merged properties (in case you need them). 
+What happens in the second case is that the properties in the merged json data are bound, then your configure method is called with the `Binder` instance passed in from Guice as well as the merged properties (in case you need them).
 
 In either case, you need to:
 
@@ -130,7 +130,7 @@ To set the variable used to determine your environment to "ENV", you can do this
 
 	-Dcom.elmsoftware.env=ENV
 
-You can also do this: 
+You can also do this:
 
 	System.setProperty(EnvironmentSettings.ENV_VAR, "ENV");
 
@@ -142,11 +142,12 @@ This is just so I don't forget how to do this. :)
 	export GPG_TTY=$(tty)
 	mvn clean gitflow:release-start gitflow:release-finish
 
-Then go to <https://oss.sonatype.org/#stagingRepositories> (and login), then select the repository to publish, 
+Then go to <https://oss.sonatype.org/#stagingRepositories> (and login), then select the repository to publish,
 then click on the "Close" button (at the top of the list).
 
 Once the release is closed, it needs to be released - this can take several minutes.
 
 Finally, push everything to the git repo:
 
+	git merge master
 	git push --all && git push --tags
