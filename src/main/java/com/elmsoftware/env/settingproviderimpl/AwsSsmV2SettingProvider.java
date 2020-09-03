@@ -1,24 +1,25 @@
 package com.elmsoftware.env.settingproviderimpl;
 
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement;
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest;
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterResult;
 import com.elmsoftware.env.SettingProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.ssm.SsmClient;
+import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
+import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
+import software.amazon.awssdk.services.ssm.model.Parameter;
 
-public class AwsSsmSettingProvider implements SettingProvider {
+public class AwsSsmV2SettingProvider implements SettingProvider {
 
-	private static final Logger log = LoggerFactory.getLogger(AwsSsmSettingProvider.class);
+	private static final Logger log = LoggerFactory.getLogger(AwsSsmV2SettingProvider.class);
 
-	private final AWSSimpleSystemsManagement awsSsm;
+	private final SsmClient ssmClient;
 	private final String prefix;
 
-	public AwsSsmSettingProvider(
-			final AWSSimpleSystemsManagement awsSsm,
+	public AwsSsmV2SettingProvider(
+			final SsmClient ssmClient,
 			final String prefix
 	) {
-		this.awsSsm = awsSsm;
+		this.ssmClient = ssmClient;
 		this.prefix = prefix;
 	}
 
@@ -27,23 +28,23 @@ public class AwsSsmSettingProvider implements SettingProvider {
 
 		log.info("looking for property {} in environment {}", key, environment);
 
-		final GetParameterResult parameter = getParameter(
+		final Parameter parameter = getParameter(
 				buildName(environment, prefix, key),
 				buildName(environment, key),
 				buildName("global", key)
 		);
 
-		return parameter.getParameter().getValue();
+		return parameter.value();
 
 	}
 
-	private GetParameterResult getParameter(final String... names) {
+	private Parameter getParameter(final String... names) {
 		for (final String name : names) {
 			try {
 				log.debug("looking for parameter {}", name);
-				final GetParameterResult parameter = awsSsm.getParameter(buildGetParameterRequest(name));
+				final GetParameterResponse response = ssmClient.getParameter(buildGetParameterRequest(name));
 				log.info("found parameter as {}", name);
-				return parameter;
+				return response.parameter();
 			} catch (final Exception e) {
 				// this can fail - we want to deal with that gracefully...
 				log.info("unable to find parameter {}", name);
@@ -57,9 +58,7 @@ public class AwsSsmSettingProvider implements SettingProvider {
 	}
 
 	private GetParameterRequest buildGetParameterRequest(final String name) {
-		return new GetParameterRequest()
-				.withName(name)
-				.withWithDecryption(true);
+		return GetParameterRequest.builder().name(name).withDecryption(true).build();
 	}
 
 	private String buildName(final String... part) {
