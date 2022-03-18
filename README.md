@@ -139,8 +139,10 @@ Release deployment Instructions
 
 This is just so I don't forget how to do this. :)
 
+	gitty release
+	# check out the newly created release branch
 	export GPG_TTY=$(tty)
-	mvn clean gitflow:release-start gitflow:release-finish
+	mvn clean deploy
 
 Then go to <https://oss.sonatype.org/#stagingRepositories> (and login), then select the repository to publish,
 then click on the "Close" button (at the top of the list).
@@ -149,5 +151,4 @@ Once the release is closed, it needs to be released - this can take several minu
 
 Finally, push everything to the git repo:
 
-	git merge master
 	git push --all && git push --tags

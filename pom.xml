@@ -173,15 +173,6 @@
 				<version>1.11.2</version>
 			</plugin>
 			<plugin>
-				<groupId>com.amashchenko.maven.plugin</groupId>
-				<artifactId>gitflow-maven-plugin</artifactId>
-				<version>1.11.0</version>
-				<configuration>
-					<postReleaseGoals>deploy</postReleaseGoals>
-					<pushRemote>false</pushRemote>
-				</configuration>
-			</plugin>
-			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>versions-maven-plugin</artifactId>
 				<version>2.3</version>
