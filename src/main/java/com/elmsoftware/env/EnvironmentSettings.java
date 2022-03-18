@@ -28,6 +28,7 @@ public class EnvironmentSettings {
 	private List<String> requiredSettings = new ArrayList<>();
 	// these should not be logged ever
 	private List<String> sensitiveSettings = new ArrayList<>();
+	private Map<String, String> aliases = new HashMap<>();
 
 	public static EnvironmentSettings load(final String resourceName) {
 
@@ -170,6 +171,18 @@ public class EnvironmentSettings {
 			}
 		}
 
+		// apply aliases
+		log.info("applying aliases for {}", aliases.keySet());
+		aliases.keySet().forEach(key -> {
+			log.debug(
+				"setting property '{}' to '{}' (an alias of property '{}')",
+				aliases.get(key),
+				protectedValue(key, mergedResults.get(key)),
+				key
+			);
+			mergedResults.put(aliases.get(key), mergedResults.get(key));
+		});
+
 		return mergedResults;
 
 	}
@@ -195,6 +208,22 @@ public class EnvironmentSettings {
 
 	public List<String> getRequiredSettings() {
 		return requiredSettings;
+	}
+
+	public Map<String, String> getAliases() {
+		return aliases;
+	}
+
+	public void setAliases(final Map<String, String> aliases) {
+		this.aliases = aliases;
+	}
+
+	public List<String> getSensitiveSettings() {
+		return sensitiveSettings;
+	}
+
+	public void setSensitiveSettings(final List<String> sensitiveSettings) {
+		this.sensitiveSettings = sensitiveSettings;
 	}
 
 }

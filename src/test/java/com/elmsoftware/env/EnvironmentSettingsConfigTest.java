@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -66,7 +67,11 @@ public class EnvironmentSettingsConfigTest {
 		// assert results
 		final PropertySource<Properties> propertySource = (PropertySource<Properties>) propertySources.get("environment-test.json/PROD");
 		final Properties source = propertySource.getSource();
-		assertEquals(5, source.size());
+		assertEquals(8, source.size());
+
+		assertSame(source.getProperty("some_boolean_property_name"), source.getProperty("a.boolean"));
+		assertSame(source.getProperty("some_integer_property_name"), source.getProperty("an.integer"));
+		assertSame(source.getProperty("some_required_property_name"), source.getProperty("this.is.required"));
 
 	}
 
@@ -90,7 +95,7 @@ public class EnvironmentSettingsConfigTest {
 		// assert results
 		final PropertySource<Properties> propertySource = (PropertySource<Properties>) propertySources.get("environment-test.json/LOCAL");
 		final Properties source = propertySource.getSource();
-		assertEquals(4, source.size());
+		assertEquals(7, source.size());
 
 	}
 

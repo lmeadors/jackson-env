@@ -16,5 +16,18 @@
 	},
 	"requiredSettings": [
 		"this.is.required"
-	]
+	],
+	"sensitiveSettings": [
+		"this.is.required"
+	],
+	"aliases": {
+		// these will create property alias values - for example, the
+		// value of the "a.boolean" property will be copied to
+		// "some_boolean_property_name" - this is useful for cases
+		// where you have existing names that you want to use for
+		// something like spring boot.
+		"a.boolean": "some_boolean_property_name",
+		"an.integer": "some_integer_property_name",
+		"this.is.required": "some_required_property_name"
+	}
 }
