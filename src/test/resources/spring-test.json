@@ -12,6 +12,6 @@
 		}
 	},
 	"requiredSettings": [
-		// none yet
+		"spring.key"
 	]
 }

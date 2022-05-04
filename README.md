@@ -1,5 +1,4 @@
-jackson-env
-===
+# jackson-env
 
 This is a tool for managing multiple environments using json.
 
@@ -69,8 +68,7 @@ So, the rules are:
 
 Simple.
 
-Maven
----
+## Maven
 
 To add this to your project, add this:
 
@@ -78,14 +76,13 @@ To add this to your project, add this:
 		<dependency>
 			<groupId>com.elm-software</groupId>
 			<artifactId>jackson-env</artifactId>
-			<version>1.8</version>
+			<version>XXX</version>
 		</dependency>
 	</dependencies>
 
 It's in the central repositories, so that's it.
 
-Using jackson-env with guice
----
+## Using jackson-env with guice
 
 This is pretty simple - a module has been created for you.
 
@@ -112,8 +109,7 @@ Just that simple:
 
 	$ java -Denvironment=PROD ...
 
-Using jackson-env with spring
----
+## Using jackson-env with spring
 
 The spring integration feels hokey to me still - if you have a better way, please for the love of all that is good, fork and send me a patch. Maybe JNDI?
 
@@ -121,8 +117,8 @@ You load up an instance of the `EnvironmentSettingsResolver` class, and it in tu
 
 Just make sure that it loads before anything that needs it.
 
-Using a different property to control environment
----
+## Using a different property to control environment
+
 
 In addition to using a Java environment variable named "environment" to set the environment, you can now use any property.
 
@@ -134,8 +130,26 @@ You can also do this:
 
 	System.setProperty(EnvironmentSettings.ENV_VAR, "ENV");
 
-Release deployment Instructions
----
+## handling exceptions from providers
+
+Where providers catch exceptions, I use a `Consumer<ProviderExceptionHandler.ExceptionInfo>` to deal with those.
+
+If you want to do something different from the default (in `ProviderExceptionHandler`, you can add an (optional)
+implementation to the provider.
+
+For example:
+
+```java
+	final Consumer<ProviderExceptionHandler.ExceptionInfo> exceptionHandler = exceptionInfo -> {
+		log.warn("oh noes!!! exception -> {}", exceptionInfo);
+		throw new RuntimeException(exceptionInfo.getException());
+	};
+
+	provider = new AwsSsmSettingProvider(ssm, "prefix", exceptionHandler);
+```
+
+
+## Release deployment Instructions
 
 This is just so I don't forget how to do this. :)
 

@@ -1,19 +1,20 @@
 package com.elmsoftware.env.settingproviderimpl;
 
 import com.elmsoftware.env.SettingProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 import software.amazon.awssdk.services.ssm.model.Parameter;
 
-public class AwsSsmV2SettingProvider implements SettingProvider {
+import java.util.function.Consumer;
 
-	private static final Logger log = LoggerFactory.getLogger(AwsSsmV2SettingProvider.class);
+@Slf4j
+public class AwsSsmV2SettingProvider implements SettingProvider {
 
 	private final SsmClient ssmClient;
 	private final String prefix;
+	private final Consumer<ProviderExceptionHandler.ExceptionInfo> exceptionHandler;
 
 	public AwsSsmV2SettingProvider(
 			final SsmClient ssmClient,
@@ -21,6 +22,17 @@ public class AwsSsmV2SettingProvider implements SettingProvider {
 	) {
 		this.ssmClient = ssmClient;
 		this.prefix = prefix;
+		this.exceptionHandler = new ProviderExceptionHandler();
+	}
+
+	public AwsSsmV2SettingProvider(
+			final SsmClient ssmClient,
+			final String prefix,
+			final ProviderExceptionHandler exceptionHandler
+	) {
+		this.ssmClient = ssmClient;
+		this.prefix = prefix;
+		this.exceptionHandler = exceptionHandler;
 	}
 
 	@Override
@@ -46,10 +58,7 @@ public class AwsSsmV2SettingProvider implements SettingProvider {
 				log.info("found parameter as {}", name);
 				return response.parameter();
 			} catch (final Exception e) {
-				// this can fail - we want to deal with that gracefully...
-				log.info("unable to find parameter {}", name);
-				// ...but provide SOME idea what happened for debugging
-				log.debug(e.toString(), e);
+				exceptionHandler.accept(new ProviderExceptionHandler.ExceptionInfo(name, e));
 			}
 		}
 
@@ -58,7 +67,9 @@ public class AwsSsmV2SettingProvider implements SettingProvider {
 	}
 
 	private GetParameterRequest buildGetParameterRequest(final String name) {
-		return GetParameterRequest.builder().name(name).withDecryption(true).build();
+		return GetParameterRequest.builder()
+			.name(name)
+			.withDecryption(true).build();
 	}
 
 	private String buildName(final String... part) {

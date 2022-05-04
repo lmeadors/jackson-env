@@ -4,15 +4,16 @@ import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
 import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest;
 import com.amazonaws.services.simplesystemsmanagement.model.GetParameterResult;
 import com.elmsoftware.env.SettingProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+import java.util.function.Consumer;
+
+@Slf4j
 public class AwsSsmSettingProvider implements SettingProvider {
-
-	private static final Logger log = LoggerFactory.getLogger(AwsSsmSettingProvider.class);
 
 	private final AWSSimpleSystemsManagement awsSsm;
 	private final String prefix;
+	private final Consumer<ProviderExceptionHandler.ExceptionInfo> exceptionHandler;
 
 	public AwsSsmSettingProvider(
 			final AWSSimpleSystemsManagement awsSsm,
@@ -20,6 +21,17 @@ public class AwsSsmSettingProvider implements SettingProvider {
 	) {
 		this.awsSsm = awsSsm;
 		this.prefix = prefix;
+		this.exceptionHandler = new ProviderExceptionHandler();
+	}
+
+	public AwsSsmSettingProvider(
+			final AWSSimpleSystemsManagement awsSsm,
+			final String prefix,
+			final Consumer<ProviderExceptionHandler.ExceptionInfo> exceptionHandler
+	) {
+		this.awsSsm = awsSsm;
+		this.prefix = prefix;
+		this.exceptionHandler = exceptionHandler;
 	}
 
 	@Override
@@ -45,10 +57,7 @@ public class AwsSsmSettingProvider implements SettingProvider {
 				log.info("found parameter as {}", name);
 				return parameter;
 			} catch (final Exception e) {
-				// this can fail - we want to deal with that gracefully...
-				log.info("unable to find parameter {}", name);
-				// ...but provide SOME idea what happened for debugging
-				log.debug(e.toString(), e);
+				exceptionHandler.accept(new ProviderExceptionHandler.ExceptionInfo(name, e));
 			}
 		}
 
@@ -58,8 +67,8 @@ public class AwsSsmSettingProvider implements SettingProvider {
 
 	private GetParameterRequest buildGetParameterRequest(final String name) {
 		return new GetParameterRequest()
-				.withName(name)
-				.withWithDecryption(true);
+			.withName(name)
+			.withWithDecryption(true);
 	}
 
 	private String buildName(final String... part) {
