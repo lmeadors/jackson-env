@@ -6,16 +6,22 @@ import com.google.inject.Key;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -37,33 +43,6 @@ public class EnvironmentSettingsModuleTest {
 	@Captor
 	private ArgumentCaptor<Key<String>> argumentCaptor;
 
-/*	@Test
-	public void should_bind_named_values_with_optional_overrides() {
-
-		// setup test
-		System.setProperty("environment.json", "guice-test.json");
-		System.setProperty("local.environment.json", "local-guice-test.json");
-
-		when(binder.bind(any(Key.class))).thenReturn(builder);
-		when(binder.skipSources(Names.class)).thenReturn(binder);
-
-		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(new NoOpSettingProvider(), util);
-
-		// run test
-		module.configure(binder);
-
-		// verify outcome
-		verify(binder).skipSources(Names.class);
-		verify(binder, times(2)).bind(argumentCaptor.capture());
-		verifyNoMoreInteractions(binder);
-
-		final List<Key<String>> allValues = argumentCaptor.getAllValues();
-
-		assertNotNull(findKey(allValues, "some.key"));
-		assertNotNull(findKey(allValues, "some.local.key"));
-
-	}
-*/
 	@Test
 	public void should_bind_named_values_without_optional_overrides() {
 
@@ -118,17 +97,23 @@ public class EnvironmentSettingsModuleTest {
 		assertNotNull(providerField);
 		providerField.setAccessible(true);
 		assertNotNull(providerField.get(module));
-
 	}
 
-	private Key<String> findKey(final List<Key<String>> allValues, final String name) {
-		for (final Key<String> key : allValues) {
-			final Named annotation = (Named) key.getAnnotation();
-			if (annotation.value().equals(name)) {
-				return key;
-			}
-		}
-		return null;
-	}
+	@Test
+	public void should_use_environment_settings_if_set() throws Exception {
+		// setup test
+		final String dockerEnvironmentVariable = "I'm configurable for docker!";
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(new NoOpSettingProvider(), util);
 
+		System.setProperty("environment.json", "guice-test.json");
+		when(binder.bind(any(Key.class))).thenReturn(builder);
+		when(binder.skipSources(Names.class)).thenReturn(binder);
+
+		// run test
+		withEnvironmentVariable("SOME_KEY", dockerEnvironmentVariable)
+			.execute(() -> module.configure(binder));
+
+		// verify outcome
+		verify(builder).toInstance(eq(dockerEnvironmentVariable));
+	}
 }

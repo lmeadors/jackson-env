@@ -43,26 +43,47 @@ For example, if we create a file at the root of a classpath and name it "environ
 
 The `properties` object will look something like this:
 
-- `some.key = some.local.value`
-- `another.key = a.global.value`
+| property      | value              |
+|---------------|--------------------|
+| `some.key`    | `some.local.value` |
+| `another.key` | `a.global.value`   |
 
 If we change that "LOCAL" string in the example code to "TEST", the `properties` object will look something like this:
 
-- `some.key = some.global.value`
-- `another.key = a.global.value`
+| property      | value               |
+|---------------|---------------------|
+| `some.key`    | `some.global.value` |
+| `another.key` | `a.global.value`    |
 
-In addition to this, if we run that code and add this to the command line:
+Environment variables can override anything. To match the expected format, replace non-alphanumeric characters with underscores,
+and capitalize the property names. For example, if we run the code where an environment variable `SOME_KEY` is defined ala:
+```shell
+export SOME_KEY="environment.specific.value"
+```
+the object will look like:
 
-- `-Dsome.key=some.temporary.value`
+| property      | value                        |
+|---------------|------------------------------|
+| `some.key`    | `environment.specific.value` |
+| `another.key` | `a.global.value`             |
 
-Then the the `properties` object will look something like this:
+Instead of an environment variable, if we run that code and add this jvm property to the command line:
 
-- `some.key = some.temporary.value`
-- `another.key = a.global.value`
+```shell
+java ... -Dsome.key=some.temporary.value ...
+```
+
+Then the `properties` object will look something like this:
+
+| property      | value                  |
+|---------------|------------------------|
+| `some.key`    | `some.temporary.value` |
+| `another.key` | `a.global.value`       |
 
 So, the rules are:
 
-- system properties trump everything
+- environment variables trump everything
+- system properties trump everything else
 - environment values from the file come next
 - global values come last
 

@@ -20,9 +20,7 @@ public class AwsSsmV2SettingProvider implements SettingProvider {
 			final SsmClient ssmClient,
 			final String prefix
 	) {
-		this.ssmClient = ssmClient;
-		this.prefix = prefix;
-		this.exceptionHandler = new ProviderExceptionHandler();
+		this(ssmClient, prefix, new ProviderExceptionHandler());
 	}
 
 	public AwsSsmV2SettingProvider(
