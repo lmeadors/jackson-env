@@ -27,7 +27,7 @@ public class EnvironmentOverridingPostProcessor implements SettingPostProcessor 
 			final String environmentProperty = property.replaceAll("[^A-Za-z0-9]", "_").toUpperCase(Locale.US);
 			final String environmentValue = System.getenv(environmentProperty);
 			if (environmentValue != null) {
-				log.debug("Overriding " + property + " with environment variable.");
+				log.debug("Overriding {} with environment variable.", property);
 				properties.setProperty(property, environmentValue);
 			}
 		});
