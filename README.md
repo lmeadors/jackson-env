@@ -55,8 +55,10 @@ If we change that "LOCAL" string in the example code to "TEST", the `properties`
 | `some.key`    | `some.global.value` |
 | `another.key` | `a.global.value`    |
 
-Environment variables can override anything. To match the expected format, replace non-alphanumeric characters with underscores,
-and capitalize the property names. For example, if we run the code where an environment variable `SOME_KEY` is defined ala:
+Environment variables can override anything, when the
+[EnvironmentOverridingPostProcessor](/src/main/java/com/elmsoftware/env/settingpostprocessorimpl/EnvironmentOverridingPostProcessor.java)
+is used. To match the expected format, replace non-alphanumeric characters with underscores, and capitalize the property
+names. For example, if we run the code where an environment variable `SOME_KEY` is defined ala:
 ```shell
 export SOME_KEY="environment.specific.value"
 ```
@@ -82,7 +84,7 @@ Then the `properties` object will look something like this:
 
 So, the rules are:
 
-- environment variables trump everything
+- environment variables trump everything when the post processor is configured
 - system properties trump everything else
 - environment values from the file come next
 - global values come last
@@ -113,7 +115,7 @@ You can also extend the `EnvironmentSettingsModule` and implement this:
 
 		protected  void configure(
 			final Binder binder,
-			final Map<String, String> properties
+			final Properties properties
 		){
 			// add your configuration here...
 		}

@@ -7,8 +7,9 @@ import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class EnvironmentSettingsModule implements Module {
 
@@ -16,6 +17,7 @@ public class EnvironmentSettingsModule implements Module {
 
 	private final Util util;
 	private final SettingProvider settingProvider;
+	private final SettingPostProcessor settingPostProcessor;
 
 	public EnvironmentSettingsModule() {
 		this(new NoOpSettingProvider(), new Util());
@@ -31,8 +33,17 @@ public class EnvironmentSettingsModule implements Module {
 			final SettingProvider settingProvider,
 			final Util util
 	) {
+		this(settingProvider, util, new SettingPostProcessor() {});
+	}
+
+	public EnvironmentSettingsModule(
+		final SettingProvider settingProvider,
+		final Util util,
+		final SettingPostProcessor settingPostProcessor
+	) {
 		this.settingProvider = settingProvider;
 		this.util = util;
+		this.settingPostProcessor = settingPostProcessor;
 	}
 
 	@Override
@@ -45,30 +56,31 @@ public class EnvironmentSettingsModule implements Module {
 
 		log.debug("Loading environment {} using resource {}", environment, resourceName);
 		final EnvironmentSettings settings = EnvironmentSettings.load(resourceName);
-		overrideEnvironmentSettings(settings, environment);
-		final Map<String, String> properties = settings.merge(environment, settingProvider);
+		final Properties properties = new Properties();
+		properties.putAll(settings.merge(environment, settingProvider));
+		settingPostProcessor.process(properties);
 
 		Names.bindProperties(binder, properties);
 		configure(binder, properties);
-
 	}
 
+	protected void configure(final Binder binder, final Properties properties) {
+		// This is only the default while the deprecated configure method is still here. Once that is removed this can
+		// be empty.
+		final Map<String, String> propertiesMap = properties.entrySet().stream()
+			.filter(it -> it.getValue() instanceof String)
+			.collect(Collectors.toMap(
+				it -> (String) it.getKey(),
+				it -> (String) it.getValue()
+			));
+		configure(binder, propertiesMap);
+	}
+
+	/**
+	 * @deprecated use {@link #configure(Binder, Properties)} instead.
+	 */
+	@Deprecated
 	protected void configure(final Binder binder, final Map<String, String> properties) {
 
 	}
-
-	protected void overrideEnvironmentSettings(final EnvironmentSettings environmentSettings, final String environment) {
-		final Map<String, String> settings = environmentSettings.getEnvironmentSettings().get(environment);
-
-		settings.keySet()
-			.forEach(key -> {
-				final String envKey = key.replaceAll("[^A-Za-z0-9]", "_").toUpperCase(Locale.US);
-				final String envValue = System.getenv(envKey);
-				if (envValue != null) {
-					log.debug("Overriding " + key + " with environment variable");
-					environmentSettings.withEnvironmentSetting(environment, key, envValue);
-				}
-			});
-	}
-
 }

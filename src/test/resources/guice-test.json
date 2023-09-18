@@ -1,7 +1,8 @@
 {
 	// LOOK! A COMMENT!
 	"globalSettings": {
-		"some.key": "some.global.value"
+		"some.key": "some.global.value",
+		"other.key": "another.global.value"
 	},
 	"environmentSettings": {
 		"PROD": {

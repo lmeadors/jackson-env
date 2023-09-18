@@ -12,7 +12,6 @@ import org.springframework.core.env.PropertiesPropertySource;
 
 import java.util.Optional;
 import java.util.Properties;
-import java.util.function.Supplier;
 
 @Configuration
 public class EnvironmentSettingsConfig {
@@ -43,13 +42,9 @@ public class EnvironmentSettingsConfig {
 			log.info("no setting provided supplied - using default jvm arg provider");
 			return new JvmArgSettingProvider();
 		});
-		final SettingPostProcessor postProcessor = optionalSettingPostProcessor.orElseGet(new Supplier<SettingPostProcessor>() {
-			@Override
-			public SettingPostProcessor get() {
-				return new SettingPostProcessor() {
-					// default behavior is adequate for most cases
-				};
-			}
+		// Use the default post processor for container environments
+		final SettingPostProcessor postProcessor = optionalSettingPostProcessor.orElseGet(() -> new SettingPostProcessor() {
+			// noop behavior is adequate for most cases
 		});
 
 		// figure out the environment name

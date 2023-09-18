@@ -1,30 +1,36 @@
 package com.elmsoftware.env;
 
+import com.elmsoftware.env.settingpostprocessorimpl.EnvironmentOverridingPostProcessor;
 import com.elmsoftware.env.settingproviderimpl.NoOpSettingProvider;
 import com.google.inject.Binder;
 import com.google.inject.Key;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EnvironmentSettingsModuleTest {
@@ -60,13 +66,18 @@ public class EnvironmentSettingsModuleTest {
 
 		// verify outcome
 		verify(binder).skipSources(Names.class);
-		verify(binder).bind(argumentCaptor.capture());
+		verify(binder, times(2)).bind(argumentCaptor.capture());
 		verifyNoMoreInteractions(binder);
 
-		final Key<String> value = argumentCaptor.getValue();
-		assertTrue(value.hasAttributes());
-		final Named annotation = (Named) value.getAnnotation();
-		assertEquals("some.key", annotation.value());
+		final List<String> propertyNames = argumentCaptor.getAllValues().stream()
+			.map(it -> {
+				assertTrue(it.hasAttributes());
+				return ((Named) it.getAnnotation()).value();
+			})
+			.collect(Collectors.toList());
+
+		assertTrue(propertyNames.contains("some.key"));
+		assertTrue(propertyNames.contains("other.key"));
 	}
 
 	@Test
@@ -103,7 +114,8 @@ public class EnvironmentSettingsModuleTest {
 	public void should_use_environment_settings_if_set() throws Exception {
 		// setup test
 		final String dockerEnvironmentVariable = "I'm configurable for docker!";
-		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(new NoOpSettingProvider(), util);
+		final EnvironmentOverridingPostProcessor postProcessor = new EnvironmentOverridingPostProcessor();
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(new NoOpSettingProvider(), util, postProcessor);
 
 		System.setProperty("environment.json", "guice-test.json");
 		when(binder.bind(any(Key.class))).thenReturn(builder);
@@ -115,5 +127,36 @@ public class EnvironmentSettingsModuleTest {
 
 		// verify outcome
 		verify(builder).toInstance(eq(dockerEnvironmentVariable));
+	}
+
+	@Test
+	public void should_use_legacy_configure_on_only_string_properties() {
+		// setup test
+		final String keyToObjectProperty = "other.key";
+		final SettingPostProcessor objectifyingPostProcessor = new SettingPostProcessor() {
+			@Override
+			public Properties process(Properties properties) {
+				assertTrue(properties.containsKey(keyToObjectProperty));
+				properties.put(keyToObjectProperty, Collections.emptyList());
+
+				return properties;
+			}
+		};
+		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(new NoOpSettingProvider(), util, objectifyingPostProcessor) {
+			@Override
+			protected void configure(Binder binder, Map<String, String> properties) {
+				assertEquals(1, properties.size());
+				assertTrue(properties.containsKey("some.key"));
+			}
+		};
+
+		System.setProperty("environment.json", "guice-test.json");
+		when(binder.bind(any(Key.class))).thenReturn(builder);
+		when(binder.skipSources(Names.class)).thenReturn(binder);
+
+		// run test
+		module.configure(binder);
+
+		// verify outcome
 	}
 }
