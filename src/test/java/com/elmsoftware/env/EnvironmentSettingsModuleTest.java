@@ -15,17 +15,19 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -44,7 +46,7 @@ public class EnvironmentSettingsModuleTest {
 	@Mock
 	private SettingProvider settingProvider;
 
-	private Util util = new Util();
+	private final Util util = new Util();
 
 	@Captor
 	private ArgumentCaptor<Key<String>> argumentCaptor;
@@ -133,20 +135,19 @@ public class EnvironmentSettingsModuleTest {
 	public void should_use_legacy_configure_on_only_string_properties() {
 		// setup test
 		final String keyToObjectProperty = "other.key";
-		final SettingPostProcessor objectifyingPostProcessor = new SettingPostProcessor() {
-			@Override
-			public Properties process(Properties properties) {
+		final Function<Properties, Properties> objectifyingPostProcessor = (properties) -> {
 				assertTrue(properties.containsKey(keyToObjectProperty));
-				properties.put(keyToObjectProperty, Collections.emptyList());
-
+				properties.put(keyToObjectProperty, new Object());
 				return properties;
-			}
 		};
+
 		final EnvironmentSettingsModule module = new EnvironmentSettingsModule(new NoOpSettingProvider(), util, objectifyingPostProcessor) {
+			@SuppressWarnings("deprecation")
 			@Override
 			protected void configure(Binder binder, Map<String, String> properties) {
+				// verify outcome
 				assertEquals(1, properties.size());
-				assertTrue(properties.containsKey("some.key"));
+				assertFalse(properties.containsKey(keyToObjectProperty));
 			}
 		};
 
@@ -158,5 +159,8 @@ public class EnvironmentSettingsModuleTest {
 		module.configure(binder);
 
 		// verify outcome
+		verify(builder).toInstance("some.local.value");
+		verify(builder).toInstance(isNull(String.class));
+		verifyNoMoreInteractions(builder);
 	}
 }

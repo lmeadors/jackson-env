@@ -8,12 +8,18 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class EnvironmentSettingsConfigTest {
@@ -44,11 +50,13 @@ public class EnvironmentSettingsConfigTest {
 		// setup
 		final Optional<Util> optionalUtil = Optional.of(util);
 		final Optional<SettingProvider> optionalProvider = Optional.of(provider);
-		final Optional<SettingPostProcessor> optionalSettingPostProcessor = Optional.of(settingPostProcessor);
+		final Optional<List<Function<Properties, Properties>>> optionalSettingPostProcessor = Optional.of(
+			Collections.singletonList(settingPostProcessor)
+		);
 		System.setProperty("environment.json", "environment-test.json");
 
 		when(util.determineEnvironment(EnvironmentSettings.ENV_VAR)).thenReturn("PROD");
-		when(settingPostProcessor.process(any()))
+		when(settingPostProcessor.apply(any()))
 			.thenAnswer((Answer<Properties>) invocation -> invocation.getArgumentAt(0, Properties.class));
 
 		// run test
@@ -61,7 +69,7 @@ public class EnvironmentSettingsConfigTest {
 		// verify mocks / capture values
 		verify(util).determineEnvironment(EnvironmentSettings.ENV_VAR);
 		verify(configurableEnvironment).getPropertySources();
-		verify(settingPostProcessor).process(any());
+		verify(settingPostProcessor).apply(any());
 		verifyNoMoreInteractions(util, provider, configurableEnvironment);
 
 		// assert results

@@ -84,7 +84,7 @@ Then the `properties` object will look something like this:
 
 So, the rules are:
 
-- environment variables trump everything when the post processor is configured
+- environment variables trump everything when the `EnvironmentOverridingPostProcessor` post processor is configured
 - system properties trump everything else
 - environment values from the file come next
 - global values come last

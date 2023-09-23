@@ -10,8 +10,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.Function;
 
 @Configuration
 public class EnvironmentSettingsConfig {
@@ -31,7 +34,7 @@ public class EnvironmentSettingsConfig {
 	public EnvironmentSettings environmentSettings(
 			final Optional<Util> optionalUtil,
 			final Optional<SettingProvider> optionalSettingProvider,
-			final Optional<SettingPostProcessor> optionalSettingPostProcessor
+			final Optional<List<Function<Properties, Properties>>> optionalSettingPostProcessors
 	) {
 
 		final Util util = optionalUtil.orElseGet(() -> {
@@ -43,9 +46,7 @@ public class EnvironmentSettingsConfig {
 			return new JvmArgSettingProvider();
 		});
 		// Use the default post processor for container environments
-		final SettingPostProcessor postProcessor = optionalSettingPostProcessor.orElseGet(() -> new SettingPostProcessor() {
-			// noop behavior is adequate for most cases
-		});
+		final List<Function<Properties, Properties>> postProcessors = optionalSettingPostProcessors.orElseGet(Collections::emptyList);
 
 		// figure out the environment name
 		final String environment = util.determineEnvironment(EnvironmentSettings.ENV_VAR);
@@ -64,7 +65,9 @@ public class EnvironmentSettingsConfig {
 		properties.putAll(settings.merge(environment, settingProvider));
 		log.trace("merged settings: {}", properties);
 
-		final Properties processed = postProcessor.process(properties);
+		final Properties processed = postProcessors.stream()
+			.reduce(Function.identity(), Function::andThen)
+			.apply(properties);
 
 		// add the property source to spring's environment
 		configurableEnvironment.getPropertySources().addLast(

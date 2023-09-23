@@ -2,9 +2,12 @@
 
 java -version
 
-if [ -f "`which gnome-open`" ]
+if command -v gnome-open
 then
 	OPEN="gnome-open"
+elif command -v xdg-open
+then
+	OPEN="xdg-open"
 else
 	OPEN="open"
 fi

@@ -7,8 +7,11 @@ import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class EnvironmentSettingsModule implements Module {
@@ -17,7 +20,7 @@ public class EnvironmentSettingsModule implements Module {
 
 	private final Util util;
 	private final SettingProvider settingProvider;
-	private final SettingPostProcessor settingPostProcessor;
+	private final List<Function<Properties, Properties>> settingPostProcessors;
 
 	public EnvironmentSettingsModule() {
 		this(new NoOpSettingProvider(), new Util());
@@ -33,17 +36,25 @@ public class EnvironmentSettingsModule implements Module {
 			final SettingProvider settingProvider,
 			final Util util
 	) {
-		this(settingProvider, util, new SettingPostProcessor() {});
+		this(settingProvider, util, Function.identity());
 	}
 
 	public EnvironmentSettingsModule(
-		final SettingProvider settingProvider,
-		final Util util,
-		final SettingPostProcessor settingPostProcessor
+			final SettingProvider settingProvider,
+			final Util util,
+			final Function<Properties, Properties> settingPostProcessor
 	) {
-		this.settingProvider = settingProvider;
+		this(settingProvider, util, Collections.singletonList(settingPostProcessor));
+	}
+
+	public EnvironmentSettingsModule(
+			final SettingProvider settingProvider,
+			final Util util,
+			final List<Function<Properties, Properties>> settingPostProcessors
+	) {
 		this.util = util;
-		this.settingPostProcessor = settingPostProcessor;
+		this.settingProvider = settingProvider;
+		this.settingPostProcessors = settingPostProcessors;
 	}
 
 	@Override
@@ -58,7 +69,10 @@ public class EnvironmentSettingsModule implements Module {
 		final EnvironmentSettings settings = EnvironmentSettings.load(resourceName);
 		final Properties properties = new Properties();
 		properties.putAll(settings.merge(environment, settingProvider));
-		settingPostProcessor.process(properties);
+
+		settingPostProcessors.stream()
+			.reduce(Function.identity(), Function::andThen)
+			.apply(properties);
 
 		Names.bindProperties(binder, properties);
 		configure(binder, properties);
