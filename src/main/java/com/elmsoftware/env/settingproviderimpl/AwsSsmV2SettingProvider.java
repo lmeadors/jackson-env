@@ -3,10 +3,12 @@ package com.elmsoftware.env.settingproviderimpl;
 import com.elmsoftware.env.SettingProvider;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.ssm.SsmClient;
-import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
-import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
+import software.amazon.awssdk.services.ssm.model.GetParametersRequest;
+import software.amazon.awssdk.services.ssm.model.GetParametersResponse;
 import software.amazon.awssdk.services.ssm.model.Parameter;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -51,25 +53,29 @@ public class AwsSsmV2SettingProvider implements SettingProvider {
 	}
 
 	private Parameter getParameter(final String... names) {
-		for (final String name : names) {
-			try {
+		try {
+			final GetParametersResponse response = ssmClient.getParameters(buildGetParametersRequest(names));
+			for (final String name : names) {
 				log.debug("looking for parameter {}", name);
-				final GetParameterResponse response = ssmClient.getParameter(buildGetParameterRequest(name));
-				log.info("found parameter as {}", name);
-				return response.parameter();
-			} catch (final Exception e) {
-				exceptionHandler.accept(new ProviderExceptionHandler.ExceptionInfo(name, e));
+				final Optional<Parameter> parameter = response.parameters().stream()
+					.filter(it -> name.equals(it.name()))
+					.findFirst();
+				if (parameter.isPresent()) {
+					log.info("found parameter as {}", name);
+					return parameter.get();
+				}
 			}
+		} catch (final Exception e) {
+			exceptionHandler.accept(new ProviderExceptionHandler.ExceptionInfo(Arrays.toString(names), e));
 		}
 
-		throw new RuntimeException(String.format("unable to find parameter using pattern %s", names[0]));
-
+		throw new RuntimeException(String.format("unable to find parameter for property group %s", Arrays.toString(names)));
 	}
-
-	private GetParameterRequest buildGetParameterRequest(final String name) {
-		return GetParameterRequest.builder()
-			.name(name)
-			.withDecryption(true).build();
+	private GetParametersRequest buildGetParametersRequest(final String... names) {
+		return GetParametersRequest.builder()
+			.names(names)
+			.withDecryption(true)
+			.build();
 	}
 
 	private String buildName(final String... part) {

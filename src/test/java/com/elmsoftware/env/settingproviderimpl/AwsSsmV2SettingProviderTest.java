@@ -8,13 +8,16 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import software.amazon.awssdk.services.ssm.SsmClient;
-import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
-import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
+import software.amazon.awssdk.services.ssm.model.GetParametersRequest;
+import software.amazon.awssdk.services.ssm.model.GetParametersResponse;
 import software.amazon.awssdk.services.ssm.model.Parameter;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AwsSsmV2SettingProviderTest {
@@ -25,7 +28,7 @@ public class AwsSsmV2SettingProviderTest {
 	private AwsSsmV2SettingProvider provider;
 
 	@Captor
-	private ArgumentCaptor<GetParameterRequest> requestArgumentCaptor;
+	private ArgumentCaptor<GetParametersRequest> requestArgumentCaptor;
 
 	@Before
 	public void beforeAwsSsmV2SettingProviderTest() {
@@ -37,22 +40,25 @@ public class AwsSsmV2SettingProviderTest {
 
 		// setup
 		final String expected = "expected-value-here";
-		final GetParameterResponse response = GetParameterResponse.builder().parameter(
-			Parameter.builder().value(expected).build()
+		final GetParametersResponse response = GetParametersResponse.builder().parameters(
+			Parameter.builder()
+				.name("/test/prefix/some-key")
+				.value(expected)
+				.build()
 		).build();
 
-		when(ssmClient.getParameter(any(GetParameterRequest.class))).thenReturn(response);
+		when(ssmClient.getParameters(any(GetParametersRequest.class))).thenReturn(response);
 
 		// run test
 		final String actual = provider.getProperty("test", "some-key");
 
 		// verify mocks / capture values
-		verify(ssmClient).getParameter(requestArgumentCaptor.capture());
+		verify(ssmClient).getParameters(requestArgumentCaptor.capture());
 		verifyNoMoreInteractions(ssmClient);
 
 		// assert results
 		assertEquals(expected, actual);
-		assertEquals("/test/prefix/some-key", requestArgumentCaptor.getValue().name());
+		assertTrue(requestArgumentCaptor.getValue().names().contains("/test/prefix/some-key"));
 
 	}
 
@@ -61,46 +67,44 @@ public class AwsSsmV2SettingProviderTest {
 
 		// setup
 		final String expected = "expected-value-here";
-		final GetParameterResponse response = GetParameterResponse.builder().parameter(
-			Parameter.builder().value(expected).build()
+		final GetParametersResponse response = GetParametersResponse.builder().parameters(
+			Parameter.builder()
+				.name("/test/some-key")
+				.value(expected)
+				.build()
 		).build();
 
-		when(ssmClient.getParameter(any(GetParameterRequest.class))).thenReturn(null, response);
+		when(ssmClient.getParameters(any(GetParametersRequest.class))).thenReturn(response);
 
 		// run test
 		final String actual = provider.getProperty("test", "some-key");
 
 		// verify mocks / capture values
-		verify(ssmClient, times(2)).getParameter(requestArgumentCaptor.capture());
+		verify(ssmClient).getParameters(requestArgumentCaptor.capture());
 		verifyNoMoreInteractions(ssmClient);
 
 		// assert results
 		assertEquals(expected, actual);
-		assertEquals("/test/some-key", requestArgumentCaptor.getValue().name());
-
+		assertTrue(requestArgumentCaptor.getValue().names().contains("/test/some-key"));
 	}
 
 	@Test
 	public void should_explode_if_no_matching_parameter_found() {
 
 		// setup
-		final String expected = "expected-value-here";
-
-		when(ssmClient.getParameter(any(GetParameterRequest.class))).thenReturn(null);
+		when(ssmClient.getParameters(any(GetParametersRequest.class))).thenReturn(null);
 
 		// run test
 		try {
 			provider.getProperty("test", "some-key");
 		} catch (final Exception e) {
-			assertEquals("unable to find parameter using pattern /test/prefix/some-key", e.getMessage());
+			assertTrue(e.getMessage().startsWith("unable to find parameter"));
 		}
 
 		// verify mocks / capture values
-		verify(ssmClient, times(3)).getParameter(requestArgumentCaptor.capture());
+		verify(ssmClient).getParameters(requestArgumentCaptor.capture());
 		verifyNoMoreInteractions(ssmClient);
 
 		// assert results - nothing here
-
 	}
-
 }

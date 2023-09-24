@@ -1,8 +1,8 @@
 package com.elmsoftware.env.settingproviderimpl;
 
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement;
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest;
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterResult;
+import com.amazonaws.services.simplesystemsmanagement.model.GetParametersRequest;
+import com.amazonaws.services.simplesystemsmanagement.model.GetParametersResult;
 import com.amazonaws.services.simplesystemsmanagement.model.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -16,11 +16,14 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
@@ -35,7 +38,7 @@ public class AwsSsmSettingProviderTest {
 	private AwsSsmSettingProvider provider;
 
 	@Captor
-	private ArgumentCaptor<GetParameterRequest> getParameterRequestArgumentCaptor;
+	private ArgumentCaptor<GetParametersRequest> getParametersRequestArgumentCaptor;
 
 	@Before
 	public void beforeAwsSsmSettingProviderTest() {
@@ -54,16 +57,20 @@ public class AwsSsmSettingProviderTest {
 		provider = new AwsSsmSettingProvider(ssm, "prefix");
 
 		final String expected = "snapped-the-frame";
-		final GetParameterResult parameterResult = new GetParameterResult()
-			.withParameter(new Parameter().withValue(expected));
+		final GetParametersResult parameterResult = new GetParametersResult()
+			.withParameters(
+				new Parameter()
+					.withValue(expected)
+					.withName("/foo/prefix/my-key")
+			);
 
-		when(ssm.getParameter(any())).thenReturn(parameterResult);
+		when(ssm.getParameters(any())).thenReturn(parameterResult);
 
 		// run test
 		final String actual = provider.getProperty("foo", "my-key");
 
 		// verify mocks / capture values
-		verify(ssm).getParameter(getParameterRequestArgumentCaptor.capture());
+		verify(ssm).getParameters(getParametersRequestArgumentCaptor.capture());
 
 		// assert results
 
@@ -71,10 +78,7 @@ public class AwsSsmSettingProviderTest {
 		assertEquals(expected, actual);
 
 		// was the request what we expected?
-		final List<String> nameList = getParameterRequestArgumentCaptor.getAllValues()
-			.stream()
-			.map(GetParameterRequest::getName)
-			.collect(Collectors.toList());
+		final List<String> nameList = getParametersRequestArgumentCaptor.getValue().getNames();
 		assertTrue(nameList.contains("/foo/prefix/my-key"));
 
 	}
@@ -104,13 +108,10 @@ public class AwsSsmSettingProviderTest {
 		}
 
 		// verify mocks / capture values
-		verify(ssm, times(3)).getParameter(getParameterRequestArgumentCaptor.capture());
+		verify(ssm).getParameters(getParametersRequestArgumentCaptor.capture());
 
 		// assert results
-		final List<String> nameList = getParameterRequestArgumentCaptor.getAllValues()
-			.stream()
-			.map(GetParameterRequest::getName)
-			.collect(Collectors.toList());
+		final List<String> nameList = getParametersRequestArgumentCaptor.getValue().getNames();
 
 		for (final String value : expectedValues) {
 			assertTrue("name list should include '" + value + "'", nameList.contains(value));
@@ -130,7 +131,7 @@ public class AwsSsmSettingProviderTest {
 			"/global/snapped-the-frame"
 		};
 
-		when(ssm.getParameter(any())).thenThrow(new RuntimeException("no parameter defined"));
+		when(ssm.getParameters(any())).thenThrow(new RuntimeException("no parameter defined"));
 
 		// run test
 		try {
@@ -145,14 +146,11 @@ public class AwsSsmSettingProviderTest {
 		}
 
 		// verify mocks / capture values
-		verify(ssm, times(3)).getParameter(getParameterRequestArgumentCaptor.capture());
-		verify(handler, times(3)).accept(any(ProviderExceptionHandler.ExceptionInfo.class));
+		verify(ssm).getParameters(getParametersRequestArgumentCaptor.capture());
+		verify(handler).accept(any(ProviderExceptionHandler.ExceptionInfo.class));
 
 		// assert results
-		final List<String> nameList = getParameterRequestArgumentCaptor.getAllValues()
-			.stream()
-			.map(GetParameterRequest::getName)
-			.collect(Collectors.toList());
+		final List<String> nameList = getParametersRequestArgumentCaptor.getValue().getNames();
 
 		for (final String value : expectedValues) {
 			assertTrue("name list should include '" + value + "'", nameList.contains(value));
@@ -179,7 +177,7 @@ public class AwsSsmSettingProviderTest {
 			"/global/snapped-the-frame"
 		};
 
-		when(ssm.getParameter(any())).thenThrow(new RuntimeException("no parameter defined"));
+		when(ssm.getParameters(any())).thenThrow(new RuntimeException("no parameter defined"));
 
 		// run test
 		try {
@@ -194,17 +192,14 @@ public class AwsSsmSettingProviderTest {
 		}
 
 		// verify mocks / capture values
-		verify(ssm).getParameter(getParameterRequestArgumentCaptor.capture());
+		verify(ssm).getParameters(getParametersRequestArgumentCaptor.capture());
 
 		// assert results
-		final List<String> actualValues = getParameterRequestArgumentCaptor.getAllValues()
-			.stream()
-			.map(GetParameterRequest::getName)
-			.collect(Collectors.toList());
+		final List<String> actualValues = getParametersRequestArgumentCaptor.getValue().getNames();
 
-		assertEquals(1, actualValues.size());
-		assertTrue(actualValues.contains("/fml/prefix/snapped-the-frame"));
-
+		assertEquals(expectedValues.length, actualValues.size());
+		for (String expectedValue : expectedValues) {
+			assertTrue(actualValues.contains(expectedValue));
+		}
 	}
-
 }

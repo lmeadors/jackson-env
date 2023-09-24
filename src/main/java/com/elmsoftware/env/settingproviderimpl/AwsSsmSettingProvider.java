@@ -1,11 +1,14 @@
 package com.elmsoftware.env.settingproviderimpl;
 
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement;
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterRequest;
-import com.amazonaws.services.simplesystemsmanagement.model.GetParameterResult;
+import com.amazonaws.services.simplesystemsmanagement.model.GetParametersRequest;
+import com.amazonaws.services.simplesystemsmanagement.model.GetParametersResult;
+import com.amazonaws.services.simplesystemsmanagement.model.Parameter;
 import com.elmsoftware.env.SettingProvider;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -39,35 +42,40 @@ public class AwsSsmSettingProvider implements SettingProvider {
 
 		log.info("looking for property {} in environment {}", key, environment);
 
-		final GetParameterResult parameter = getParameter(
+		final Parameter parameter = getParameter(
 				buildName(environment, prefix, key),
 				buildName(environment, key),
 				buildName("global", key)
 		);
 
-		return parameter.getParameter().getValue();
+		return parameter.getValue();
 
 	}
 
-	private GetParameterResult getParameter(final String... names) {
-		for (final String name : names) {
-			try {
+	private Parameter getParameter(final String... names) {
+		try {
+			final GetParametersResult result = awsSsm.getParameters(buildGetParametersRequest(names));
+			for (final String name : names) {
 				log.debug("looking for parameter {}", name);
-				final GetParameterResult parameter = awsSsm.getParameter(buildGetParameterRequest(name));
-				log.info("found parameter as {}", name);
-				return parameter;
-			} catch (final Exception e) {
-				exceptionHandler.accept(new ProviderExceptionHandler.ExceptionInfo(name, e));
+				final Optional<Parameter> parameter = result.getParameters().stream()
+					.filter(it -> name.equals(it.getName()))
+					.findFirst();
+				if (parameter.isPresent()) {
+					log.info("found parameter as {}", name);
+					return parameter.get();
+				}
 			}
+		} catch (final Exception e) {
+			exceptionHandler.accept(new ProviderExceptionHandler.ExceptionInfo(Arrays.toString(names), e));
 		}
 
 		throw new RuntimeException(String.format("unable to find parameter using pattern %s", names[0]));
 
 	}
 
-	private GetParameterRequest buildGetParameterRequest(final String name) {
-		return new GetParameterRequest()
-			.withName(name)
+	private GetParametersRequest buildGetParametersRequest(final String... names) {
+		return new GetParametersRequest()
+			.withNames(names)
 			.withWithDecryption(true);
 	}
 

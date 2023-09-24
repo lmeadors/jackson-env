@@ -11,7 +11,7 @@ public class ProviderExceptionHandler implements Consumer<ProviderExceptionHandl
 	@Override
 	public void accept(final ExceptionInfo info) {
 		// this can fail - we want to deal with that gracefully...
-		log.info("unable to find parameter {}", info.name);
+		log.info("unable to find parameter(s) {}", info.name);
 		// ...but provide SOME idea what happened for debugging
 		log.debug(info.toString(), info);
 	}
