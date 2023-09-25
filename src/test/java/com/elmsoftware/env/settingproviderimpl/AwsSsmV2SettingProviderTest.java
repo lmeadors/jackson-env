@@ -25,27 +25,41 @@ public class AwsSsmV2SettingProviderTest {
 	@Mock
 	private SsmClient ssmClient;
 
-	private AwsSsmV2SettingProvider provider;
-
 	@Captor
 	private ArgumentCaptor<GetParametersRequest> requestArgumentCaptor;
+
+	private AwsSsmV2SettingProvider provider;
+	private Parameter fullyQualifiedParameter;
+	private Parameter environmentSpecificParameter;
+	private Parameter globalParameter;
 
 	@Before
 	public void beforeAwsSsmV2SettingProviderTest() {
 		provider = new AwsSsmV2SettingProvider(ssmClient, "prefix");
+
+		fullyQualifiedParameter = Parameter.builder()
+			.name("/test/prefix/some-key")
+			.value("full-value")
+			.build();
+		environmentSpecificParameter = Parameter.builder()
+			.name("/test/some-key")
+			.value("environment-value")
+			.build();
+		globalParameter = Parameter.builder()
+			.name("/global/some-key")
+			.value("global-value")
+			.build();
 	}
 
 	@Test
 	public void should_get_value_with_full_name() {
-
 		// setup
-		final String expected = "expected-value-here";
-		final GetParametersResponse response = GetParametersResponse.builder().parameters(
-			Parameter.builder()
-				.name("/test/prefix/some-key")
-				.value(expected)
-				.build()
-		).build();
+		final GetParametersResponse response = GetParametersResponse.builder()
+			.parameters(
+				fullyQualifiedParameter,
+				environmentSpecificParameter,
+				globalParameter
+			).build();
 
 		when(ssmClient.getParameters(any(GetParametersRequest.class))).thenReturn(response);
 
@@ -57,22 +71,19 @@ public class AwsSsmV2SettingProviderTest {
 		verifyNoMoreInteractions(ssmClient);
 
 		// assert results
-		assertEquals(expected, actual);
+		assertEquals(fullyQualifiedParameter.value(), actual);
 		assertTrue(requestArgumentCaptor.getValue().names().contains("/test/prefix/some-key"));
 
 	}
 
 	@Test
 	public void should_get_value_for_environment() {
-
 		// setup
-		final String expected = "expected-value-here";
-		final GetParametersResponse response = GetParametersResponse.builder().parameters(
-			Parameter.builder()
-				.name("/test/some-key")
-				.value(expected)
-				.build()
-		).build();
+		final GetParametersResponse response = GetParametersResponse.builder()
+			.parameters(
+				environmentSpecificParameter,
+				globalParameter
+			).build();
 
 		when(ssmClient.getParameters(any(GetParametersRequest.class))).thenReturn(response);
 
@@ -84,8 +95,29 @@ public class AwsSsmV2SettingProviderTest {
 		verifyNoMoreInteractions(ssmClient);
 
 		// assert results
-		assertEquals(expected, actual);
+		assertEquals(environmentSpecificParameter.value(), actual);
 		assertTrue(requestArgumentCaptor.getValue().names().contains("/test/some-key"));
+	}
+
+	@Test
+	public void should_get_global_value() {
+		// setup
+		final GetParametersResponse response = GetParametersResponse.builder()
+			.parameters(globalParameter)
+			.build();
+
+		when(ssmClient.getParameters(any(GetParametersRequest.class))).thenReturn(response);
+
+		// run test
+		final String actual = provider.getProperty("test", "some-key");
+
+		// verify mocks / capture values
+		verify(ssmClient).getParameters(requestArgumentCaptor.capture());
+		verifyNoMoreInteractions(ssmClient);
+
+		// assert results
+		assertEquals(globalParameter.value(), actual);
+		assertTrue(requestArgumentCaptor.getValue().names().contains("/global/some-key"));
 	}
 
 	@Test

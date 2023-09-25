@@ -35,14 +35,26 @@ public class AwsSsmSettingProviderTest {
 	@Mock
 	private AWSSimpleSystemsManagement ssm;
 
-	private AwsSsmSettingProvider provider;
-
 	@Captor
 	private ArgumentCaptor<GetParametersRequest> getParametersRequestArgumentCaptor;
+
+	private AwsSsmSettingProvider provider;
+	private Parameter fullyQualifiedParameter;
+	private Parameter environmentSpecificParameter;
+	private Parameter globalParameter;
 
 	@Before
 	public void beforeAwsSsmSettingProviderTest() {
 		provider = new AwsSsmSettingProvider(ssm, "prefix");
+		fullyQualifiedParameter = new Parameter()
+			.withName("/test/prefix/some-key")
+			.withValue("full-value");
+		environmentSpecificParameter = new Parameter()
+			.withName("/test/some-key")
+			.withValue("environment-value");
+		globalParameter = new Parameter()
+			.withName("/global/some-key")
+			.withValue("global-value");
 	}
 
 	@After
@@ -51,36 +63,70 @@ public class AwsSsmSettingProviderTest {
 	}
 
 	@Test
-	public void should_get_value_from_ssm_with_default_prefix() {
-
+	public void should_get_value_with_full_name() {
 		// setup
-		provider = new AwsSsmSettingProvider(ssm, "prefix");
-
-		final String expected = "snapped-the-frame";
-		final GetParametersResult parameterResult = new GetParametersResult()
+		final GetParametersResult parametersResult = new GetParametersResult()
 			.withParameters(
-				new Parameter()
-					.withValue(expected)
-					.withName("/foo/prefix/my-key")
+				fullyQualifiedParameter,
+				environmentSpecificParameter,
+				globalParameter
 			);
 
-		when(ssm.getParameters(any())).thenReturn(parameterResult);
+		when(ssm.getParameters(any())).thenReturn(parametersResult);
 
 		// run test
-		final String actual = provider.getProperty("foo", "my-key");
+		final String actual = provider.getProperty("test", "some-key");
 
 		// verify mocks / capture values
 		verify(ssm).getParameters(getParametersRequestArgumentCaptor.capture());
+		verifyNoMoreInteractions(ssm);
 
 		// assert results
+		assertEquals(fullyQualifiedParameter.getValue(), actual);
+		assertTrue(getParametersRequestArgumentCaptor.getValue().getNames().contains("/test/prefix/some-key"));
+	}
 
-		// did we get the expected value?
-		assertEquals(expected, actual);
+	@Test
+	public void should_get_value_for_environment() {
+		// setup
+		final GetParametersResult parametersResult = new GetParametersResult()
+			.withParameters(
+				environmentSpecificParameter,
+				globalParameter
+			);
 
-		// was the request what we expected?
-		final List<String> nameList = getParametersRequestArgumentCaptor.getValue().getNames();
-		assertTrue(nameList.contains("/foo/prefix/my-key"));
+		when(ssm.getParameters(any())).thenReturn(parametersResult);
 
+		// run test
+		final String actual = provider.getProperty("test", "some-key");
+
+		// verify mocks / capture values
+		verify(ssm).getParameters(getParametersRequestArgumentCaptor.capture());
+		verifyNoMoreInteractions(ssm);
+
+		// assert results
+		assertEquals(environmentSpecificParameter.getValue(), actual);
+		assertTrue(getParametersRequestArgumentCaptor.getValue().getNames().contains("/test/some-key"));
+	}
+
+	@Test
+	public void should_get_global_value() {
+		// setup
+		final GetParametersResult parametersResult = new GetParametersResult()
+			.withParameters(globalParameter);
+
+		when(ssm.getParameters(any())).thenReturn(parametersResult);
+
+		// run test
+		final String actual = provider.getProperty("test", "some-key");
+
+		// verify mocks / capture values
+		verify(ssm).getParameters(getParametersRequestArgumentCaptor.capture());
+		verifyNoMoreInteractions(ssm);
+
+		// assert results
+		assertEquals(globalParameter.getValue(), actual);
+		assertTrue(getParametersRequestArgumentCaptor.getValue().getNames().contains("/global/some-key"));
 	}
 
 	@Test
